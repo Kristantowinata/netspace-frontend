@@ -8,6 +8,8 @@ interface ChatBubbleProps {
   variant: "mine" | "other";
   senderName?: string;
   senderEmoji?: string;
+  showAvatar?: boolean;
+  readReceipt?: boolean;
 }
 
 export default function ChatBubble({
@@ -16,13 +18,15 @@ export default function ChatBubble({
   variant,
   senderName,
   senderEmoji,
+  showAvatar = true,
+  readReceipt,
 }: ChatBubbleProps) {
   const isMine = variant === "mine";
 
   return (
     <div className={`chat-bubble chat-bubble--${variant}`}>
-      {/* Avatar — only for "other" */}
-      {!isMine && (
+      {/* Avatar — only for "other" when showAvatar is true */}
+      {!isMine && showAvatar && (
         <div className="chat-bubble__avatar">{senderEmoji}</div>
       )}
 
@@ -38,8 +42,13 @@ export default function ChatBubble({
           <p className="chat-bubble__text">{message}</p>
         </div>
 
-        {/* Timestamp */}
-        <span className="chat-bubble__time">{timestamp}</span>
+        {/* Timestamp + read receipt */}
+        <span className="chat-bubble__time">
+          {timestamp}
+          {isMine && readReceipt && (
+            <span className="chat-bubble__read">✓✓</span>
+          )}
+        </span>
       </div>
 
       <style jsx>{`
@@ -132,6 +141,14 @@ export default function ChatBubble({
         .chat-bubble--mine .chat-bubble__time {
           padding-left: 0;
           padding-right: 4px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .chat-bubble__read {
+          color: rgba(56, 180, 255, 0.7);
+          font-size: 10px;
         }
       `}</style>
     </div>

@@ -4,9 +4,10 @@ import React, { useState } from "react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  placeholder?: string;
 }
 
-export default function ChatInput({ onSend }: ChatInputProps) {
+export default function ChatInput({ onSend, placeholder = "Tulis pesan..." }: ChatInputProps) {
   const [value, setValue] = useState("");
 
   const handleSend = () => {
@@ -31,7 +32,7 @@ export default function ChatInput({ onSend }: ChatInputProps) {
         <input
           type="text"
           className="chat-input__field"
-          placeholder="Tulis pesan..."
+          placeholder={placeholder}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
