@@ -7,9 +7,11 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import ProgressBar from "@/components/ui/ProgressBar";
 import GenderSelector from "@/components/ui/GenderSelector";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function IdentityPage() {
   const router = useRouter();
+  const { locationName, setIdentity } = useAppStore();
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export default function IdentityPage() {
 
   const handleSubmit = () => {
     if (!isValid) return;
-    // TODO: Save to Zustand store
+    setIdentity(name, age, gender!);
     router.push("/interests");
   };
 
@@ -48,7 +50,7 @@ export default function IdentityPage() {
           </div>
           <div>
             <p className="identity-header__title">Social Check-in</p>
-            <p className="identity-header__location">📍 Kopi Braga</p>
+            <p className="identity-header__location">📍 {locationName}</p>
           </div>
         </div>
       </header>

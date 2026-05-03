@@ -18,6 +18,7 @@ interface Interest {
 
 interface MockUser {
   id: string;
+  slug: string;
   name: string;
   emoji: string;
   interests: Interest[];
@@ -30,6 +31,7 @@ interface MockUser {
 const MOCK_USERS: MockUser[] = [
   {
     id: "1",
+    slug: "ken-o",
     name: "Ken O",
     emoji: "👩‍🎨",
     interests: [
@@ -39,6 +41,7 @@ const MOCK_USERS: MockUser[] = [
   },
   {
     id: "2",
+    slug: "kristanto",
     name: "Kristanto",
     emoji: "🧑‍💻",
     interests: [
@@ -48,6 +51,7 @@ const MOCK_USERS: MockUser[] = [
   },
   {
     id: "3",
+    slug: "steven",
     name: "Steven",
     emoji: "👩‍🚀",
     interests: [{ emoji: "🎵", label: "Musik" }],
@@ -154,7 +158,7 @@ export default function RoomPage() {
               name={user.name}
               emoji={user.emoji}
               interests={user.interests}
-              onChat={() => router.push(`/chat/${user.id}`)}
+              onChat={() => router.push(`/chat/${user.slug}`)}
               onTap={() => {
                 /* TODO: open profile detail */
               }}

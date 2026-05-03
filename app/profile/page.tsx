@@ -6,14 +6,9 @@ import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import NotificationCard from "@/components/ui/NotificationCard";
+import { useAppStore } from "@/store/useAppStore";
 
-/* ──────────────────────────────────────────
-   Mock data — will be replaced by Zustand / API
-   ────────────────────────────────────────── */
 
-const MOCK_PROFILE = {
-  name: "Kevin N",
-};
 
 interface Notification {
   id: string;
@@ -59,9 +54,11 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { name, reset } = useAppStore();
+  const displayName = name || "User";
 
   const handleLogout = () => {
-    // TODO: clear Zustand state / session
+    reset();
     router.push("/");
   };
 
@@ -75,7 +72,7 @@ export default function ProfilePage() {
       {/* ── Profile section ── */}
       <div className="pf-profile">
         <ProfileAvatar />
-        <h1 className="pf-profile__name">{MOCK_PROFILE.name}</h1>
+        <h1 className="pf-profile__name">{displayName}</h1>
       </div>
 
       {/* ── Section label ── */}

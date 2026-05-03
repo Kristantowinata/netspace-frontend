@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useAppStore } from "@/store/useAppStore";
 
 /* ----------------------------------------
    Types
@@ -23,43 +24,42 @@ interface NavTab {
   matchPrefixes: string[];
 }
 
-/* ----------------------------------------
-   Tab definitions
-   ---------------------------------------- */
-
-const TABS: NavTab[] = [
-  {
-    key: "home",
-    label: "Home",
-    href: "/room/public",
-    iconActive: "/Assets/home_active.png",
-    iconInactive: "/Assets/home_inactive.png",
-    matchPrefixes: ["/room", "/identity", "/interests"],
-  },
-  {
-    key: "chat",
-    label: "Chat",
-    href: "/chats",
-    iconActive: "/Assets/chat_active.png",
-    iconInactive: "/Assets/chat_inactive.png",
-    matchPrefixes: ["/chats", "/chat/", "/group/", "/room/public"],
-  },
-  {
-    key: "profile",
-    label: "Profil",
-    href: "/profile",
-    iconActive: "/Assets/profil_active.png",
-    iconInactive: "/Assets/profil_inactive.png",
-    matchPrefixes: ["/profile"],
-  },
-];
 
 /* ----------------------------------------
    Component
    ---------------------------------------- */
 
+
 export default function BottomNav({ chatUnread = false }: BottomNavProps) {
   const pathname = usePathname();
+  const location = useAppStore((s) => s.location);
+
+  const TABS: NavTab[] = [
+    {
+      key: "home",
+      label: "Home",
+      href: `/room/${location}`,
+      iconActive: "/Assets/home_active.png",
+      iconInactive: "/Assets/home_inactive.png",
+      matchPrefixes: ["/room", "/identity", "/interests"],
+    },
+    {
+      key: "chat",
+      label: "Chat",
+      href: "/chats",
+      iconActive: "/Assets/chat_active.png",
+      iconInactive: "/Assets/chat_inactive.png",
+      matchPrefixes: ["/chats", "/chat/", "/group/", "/room/public"],
+    },
+    {
+      key: "profile",
+      label: "Profil",
+      href: "/profile",
+      iconActive: "/Assets/profil_active.png",
+      iconInactive: "/Assets/profil_inactive.png",
+      matchPrefixes: ["/profile"],
+    },
+  ];
 
   // Longest-prefix-match: e.g. /room/public (13 chars) beats /room (5 chars)
   const activeTabKey = (() => {

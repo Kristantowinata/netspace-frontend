@@ -7,6 +7,7 @@ import ChatHeader from "@/components/ui/ChatHeader";
 import ChatBubble from "@/components/ui/ChatBubble";
 import ChatInput from "@/components/ui/ChatInput";
 import TypingIndicator from "@/components/ui/TypingIndicator";
+import { useAppStore } from "@/store/useAppStore";
 
 /* ──────────────────────────────────────────
    Types
@@ -55,6 +56,10 @@ export default function PublicChatPage() {
   const [showTyping, setShowTyping] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdCounter = useRef(10);
+  const locationName = useAppStore((s) => s.locationName);
+
+  // Online count: mock users + self
+  const onlineCount = 4;
 
   // Typing simulation: Kristanto types for 3.5s then message appears
   useEffect(() => {
@@ -101,8 +106,8 @@ export default function PublicChatPage() {
 
       {/* ── Header ── */}
       <ChatHeader
-        onlineCount={8}
-        locationName="Kopiloka"
+        onlineCount={onlineCount}
+        locationName={locationName}
         onMembersClick={() => {
           /* TODO: open members drawer */
         }}

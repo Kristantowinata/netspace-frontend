@@ -7,6 +7,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import Button from "@/components/ui/Button";
 import InterestTag from "@/components/ui/InterestTag";
 import Input from "@/components/ui/Input";
+import { useAppStore } from "@/store/useAppStore";
 
 const INTERESTS = [
   { emoji: "☕", label: "Kopi" },
@@ -25,6 +26,7 @@ const INTERESTS = [
 
 export default function InterestsPage() {
   const router = useRouter();
+  const { location, setInterests } = useAppStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCustom, setShowCustom] = useState(false);
   const [customInterest, setCustomInterest] = useState("");
@@ -46,8 +48,9 @@ export default function InterestsPage() {
 
   const handleSubmit = () => {
     if (!isValid) return;
-    // TODO: Save interests to Zustand store
-    router.push("/room/public");
+    const selectedInterests = INTERESTS.filter((i) => selected.has(i.label));
+    setInterests(selectedInterests);
+    router.push(`/room/${location}`);
   };
 
   return (
