@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
+/* ========================================
+   Social Hub — Design Tokens
+   ======================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --bg-primary: #111953;
+  --bg-card: #3436B2;
+  --bg-card-secondary: #372FAC;
+  --bg-input: #1A1F45;
+  --bg-error: #4B2A2A;
+  --bg-glow: #342789;
+
+  /* Accent */
+  --accent-primary: #5082FF;
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #8B92C8;
+  --text-muted: #4A5080;
+  --text-error: #FF6B6B;
+
+  /* Semantic */
+  --success: #22C55E;
+  --danger: #7A1F2E;
+  --danger-text: #FF6B6B;
+
+  /* Border */
+  --border: #2A2F5A;
+
+  /* Glass / Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-strong: rgba(255, 255, 255, 0.20);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-strong: rgba(255, 255, 255, 0.28);
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(135deg, #3864ff, #6438ff);
+  --gradient-cta: linear-gradient(135deg, #4338ca, #6366f1, #5082FF);
+  --gradient-progress: linear-gradient(90deg, #3864ff, #6ac8ff);
 }
 
+/* Expose tokens to Tailwind v4 via @theme */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-card: var(--bg-card);
+  --color-bg-card-secondary: var(--bg-card-secondary);
+  --color-bg-input: var(--bg-input);
+  --color-bg-error: var(--bg-error);
+  --color-bg-glow: var(--bg-glow);
+  --color-accent-primary: var(--accent-primary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-error: var(--text-error);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-danger-text: var(--danger-text);
+  --color-border: var(--border);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ========================================
+   Base Styles
+   ======================================== */
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar but keep scrollable */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   Glass Utilities
+   ======================================== */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border-strong);
 }
