@@ -42,7 +42,7 @@ const TABS: NavTab[] = [
     href: "/chats",
     iconActive: "/Assets/chat_active.png",
     iconInactive: "/Assets/chat_inactive.png",
-    matchPrefixes: ["/chats", "/chat/", "/group/"],
+    matchPrefixes: ["/chats", "/chat/", "/group/", "/room/public"],
   },
   {
     key: "profile",
@@ -61,8 +61,22 @@ const TABS: NavTab[] = [
 export default function BottomNav({ chatUnread = false }: BottomNavProps) {
   const pathname = usePathname();
 
-  const isActive = (tab: NavTab): boolean =>
-    tab.matchPrefixes.some((prefix) => pathname.startsWith(prefix));
+  // Longest-prefix-match: e.g. /room/public (13 chars) beats /room (5 chars)
+  const activeTabKey = (() => {
+    let bestKey = "";
+    let bestLen = 0;
+    for (const tab of TABS) {
+      for (const prefix of tab.matchPrefixes) {
+        if (pathname.startsWith(prefix) && prefix.length > bestLen) {
+          bestKey = tab.key;
+          bestLen = prefix.length;
+        }
+      }
+    }
+    return bestKey;
+  })();
+
+  const isActive = (tab: NavTab): boolean => tab.key === activeTabKey;
 
   return (
     <nav className="bottom-nav" aria-label="Main navigation">
