@@ -7,6 +7,7 @@ import ChatHeader from "@/components/ui/ChatHeader";
 import ChatBubble from "@/components/ui/ChatBubble";
 import ChatInput from "@/components/ui/ChatInput";
 import TypingIndicator from "@/components/ui/TypingIndicator";
+import MembersDrawer from "@/components/ui/MembersDrawer";
 import { useAppStore } from "@/store/useAppStore";
 
 /* ──────────────────────────────────────────
@@ -54,6 +55,7 @@ export default function PublicChatPage() {
     },
   ]);
   const [showTyping, setShowTyping] = useState(true);
+  const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdCounter = useRef(10);
   const locationName = useAppStore((s) => s.locationName);
@@ -108,9 +110,7 @@ export default function PublicChatPage() {
       <ChatHeader
         onlineCount={onlineCount}
         locationName={locationName}
-        onMembersClick={() => {
-          /* TODO: open members drawer */
-        }}
+        onMembersClick={() => setShowMembers(true)}
       />
 
       {/* ── Messages ── */}
@@ -154,6 +154,19 @@ export default function PublicChatPage() {
 
       {/* ── Spacer ── */}
       <div className="public-chat-spacer" />
+
+      {/* ── Members Drawer ── */}
+      <MembersDrawer
+        isOpen={showMembers}
+        locationName={locationName}
+        members={[
+          { id: "1", name: "Ken O", emoji: "👩‍🎨", isOnline: true },
+          { id: "2", name: "Kristanto", emoji: "🧑‍💻", isOnline: true },
+          { id: "3", name: "Steven", emoji: "👩‍🚀", isOnline: true },
+          { id: "me", name: "You", emoji: "🧑‍💻", isOnline: true },
+        ]}
+        onClose={() => setShowMembers(false)}
+      />
 
       <style jsx>{`
         /* Background orbs */

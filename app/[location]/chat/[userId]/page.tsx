@@ -8,6 +8,7 @@ import PrivateChatHeader from "@/components/ui/PrivateChatHeader";
 import ChatBubble from "@/components/ui/ChatBubble";
 import ChatInput from "@/components/ui/ChatInput";
 import TypingIndicator from "@/components/ui/TypingIndicator";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 /* ──────────────────────────────────────────
    Types
@@ -56,6 +57,7 @@ export default function PrivateChatPage() {
   ]);
   // TODO: Replace with WebSocket-driven typing state when backend is ready
   const showTyping = false;
+  const [showBlockModal, setShowBlockModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdCounter = useRef(10);
 
@@ -97,7 +99,7 @@ export default function PrivateChatPage() {
         isOnline={true}
         onBack={() => router.back()}
         onCreateGroup={() => {/* TODO: group creation */}}
-        onBlock={() => {/* TODO: block user */}}
+        onBlock={() => setShowBlockModal(true)}
       />
 
       {/* ── Messages ── */}
@@ -142,6 +144,21 @@ export default function PrivateChatPage() {
 
       {/* ── Spacer ── */}
       <div className="dm-spacer" />
+
+      {/* ── Block User Modal ── */}
+      <ConfirmModal
+        isOpen={showBlockModal}
+        icon="⛔"
+        title={`Block ${user.name}?`}
+        description="Kamu tidak akan bisa menerima pesan dari orang ini lagi selama sesi berlangsung."
+        confirmLabel="Block"
+        variant="danger"
+        onConfirm={() => {
+          setShowBlockModal(false);
+          router.back();
+        }}
+        onCancel={() => setShowBlockModal(false)}
+      />
 
       <style jsx>{`
         /* Background orbs */

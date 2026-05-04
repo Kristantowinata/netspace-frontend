@@ -6,6 +6,7 @@ import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
 import UserCard from "@/components/ui/UserCard";
 import PublicRoomCard from "@/components/ui/PublicRoomCard";
+import UserProfileDrawer from "@/components/ui/UserProfileDrawer";
 
 /* ──────────────────────────────────────────
    Types
@@ -80,6 +81,7 @@ export default function RoomPage() {
   const locationName = formatLocationName(location);
 
   const [activeTab, setActiveTab] = useState("Semua");
+  const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
 
   // Online count = other users + self
   const onlineCount = MOCK_USERS.length + 1;
@@ -159,9 +161,7 @@ export default function RoomPage() {
               emoji={user.emoji}
               interests={user.interests}
               onChat={() => router.push(`/${location}/chat/${user.slug}`)}
-              onTap={() => {
-                /* TODO: open profile detail */
-              }}
+              onTap={() => setSelectedUser(user)}
             />
           ))
         ) : (
@@ -186,6 +186,21 @@ export default function RoomPage() {
 
       {/* ── Spacer for fixed elements ── */}
       <div className="room-spacer" />
+
+      {/* ── User Profile Drawer ── */}
+      {selectedUser && (
+        <UserProfileDrawer
+          isOpen={true}
+          name={selectedUser.name}
+          emoji={selectedUser.emoji}
+          interests={selectedUser.interests}
+          onClose={() => setSelectedUser(null)}
+          onChat={() => {
+            setSelectedUser(null);
+            router.push(`/${location}/chat/${selectedUser.slug}`);
+          }}
+        />
+      )}
 
       <style jsx>{`
         /* Background orbs */

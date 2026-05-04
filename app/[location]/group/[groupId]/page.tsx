@@ -8,6 +8,8 @@ import GroupChatHeader from "@/components/ui/GroupChatHeader";
 import GroupMembersBar from "@/components/ui/GroupMembersBar";
 import ChatBubble from "@/components/ui/ChatBubble";
 import ChatInput from "@/components/ui/ChatInput";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import InviteModal from "@/components/ui/InviteModal";
 
 /* ──────────────────────────────────────────
    Types
@@ -78,6 +80,8 @@ export default function GroupSessionPage() {
   const router = useRouter();
 
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdCounter = useRef(10);
 
@@ -125,8 +129,8 @@ export default function GroupSessionPage() {
       {/* ── Members ── */}
       <GroupMembersBar
         members={MOCK_MEMBERS}
-        onInvite={() => {/* TODO: invite modal */}}
-        onLeave={() => {/* TODO: leave group */}}
+        onInvite={() => setShowInviteModal(true)}
+        onLeave={() => setShowLeaveModal(true)}
       />
 
       {/* ── Messages ── */}
@@ -162,6 +166,35 @@ export default function GroupSessionPage() {
 
       {/* ── Spacer ── */}
       <div className="gs-spacer" />
+
+      {/* ── Leave Group Modal ── */}
+      <ConfirmModal
+        isOpen={showLeaveModal}
+        icon="🚪"
+        title="Keluar dari grup?"
+        description="Kamu akan keluar dari group session ini. Pesan yang sudah dikirim tetap terlihat oleh anggota lain."
+        confirmLabel="Keluar"
+        variant="danger"
+        onConfirm={() => {
+          setShowLeaveModal(false);
+          router.back();
+        }}
+        onCancel={() => setShowLeaveModal(false)}
+      />
+
+      {/* ── Invite Modal ── */}
+      <InviteModal
+        isOpen={showInviteModal}
+        availableUsers={[
+          { id: "1", name: "Ken O", emoji: "👩‍🎨" },
+          { id: "2", name: "Kristanto", emoji: "🧑‍💻" },
+        ]}
+        onInvite={(ids) => {
+          // TODO: Send invite via WebSocket
+          console.log("Invited:", ids);
+        }}
+        onClose={() => setShowInviteModal(false)}
+      />
 
       <style jsx>{`
         /* Background orbs */
