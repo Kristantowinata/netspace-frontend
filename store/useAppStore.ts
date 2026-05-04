@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface Interest {
   emoji: string;
@@ -37,22 +38,39 @@ const initialState = {
   age: "",
   gender: null as string | null,
   interests: [] as Interest[],
-  location: "koktong",
-  locationName: "Koktong",
+  location: "",
+  locationName: "",
 };
 
-export const useAppStore = create<AppState>((set) => ({
-  ...initialState,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      ...initialState,
 
-  setIdentity: (name, age, gender) => set({ name, age, gender }),
+      setIdentity: (name, age, gender) => set({ name, age, gender }),
 
-  setInterests: (interests) => set({ interests }),
+      setInterests: (interests) => set({ interests }),
 
-  setLocation: (slug) =>
-    set({
-      location: slug,
-      locationName: formatLocationName(slug),
+      setLocation: (slug) =>
+        set({
+          location: slug,
+          locationName: formatLocationName(slug),
+        }),
+
+      reset: () => set({ ...initialState }),
     }),
-
-  reset: () => set({ ...initialState }),
-}));
+    {
+      name: "social-hub-session",
+      storage: createJSONStorage(() => sessionStorage),
+      // Only persist data fields, not action functions
+      partialize: (state) => ({
+        name: state.name,
+        age: state.age,
+        gender: state.gender,
+        interests: state.interests,
+        location: state.location,
+        locationName: state.locationName,
+      }),
+    }
+  )
+);

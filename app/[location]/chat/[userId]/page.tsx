@@ -54,7 +54,8 @@ export default function PrivateChatPage() {
       isMine: false,
     },
   ]);
-  const [showTyping, setShowTyping] = useState(false);
+  // TODO: Replace with WebSocket-driven typing state when backend is ready
+  const showTyping = false;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdCounter = useRef(10);
 
