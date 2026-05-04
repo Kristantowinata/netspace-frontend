@@ -38,26 +38,26 @@ export default function BottomNav({ chatUnread = false }: BottomNavProps) {
     {
       key: "home",
       label: "Home",
-      href: `/room/${location}`,
+      href: `/${location}/room`,
       iconActive: "/Assets/home_active.png",
       iconInactive: "/Assets/home_inactive.png",
-      matchPrefixes: ["/room", "/identity", "/interests"],
+      matchPrefixes: [`/${location}/room`, `/${location}/identity`, `/${location}/interests`],
     },
     {
       key: "chat",
       label: "Chat",
-      href: "/chats",
+      href: `/${location}/chats`,
       iconActive: "/Assets/chat_active.png",
       iconInactive: "/Assets/chat_inactive.png",
-      matchPrefixes: ["/chats", "/chat/", "/group/", "/room/public"],
+      matchPrefixes: [`/${location}/chats`, `/${location}/chat/`, `/${location}/group/`, `/${location}/room/public`],
     },
     {
       key: "profile",
       label: "Profil",
-      href: "/profile",
+      href: `/${location}/profile`,
       iconActive: "/Assets/profil_active.png",
       iconInactive: "/Assets/profil_inactive.png",
-      matchPrefixes: ["/profile"],
+      matchPrefixes: [`/${location}/profile`],
     },
   ];
 

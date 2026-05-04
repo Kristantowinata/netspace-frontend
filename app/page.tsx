@@ -5,15 +5,13 @@ import MobileLayout from "@/components/layout/MobileLayout";
 export default function Home() {
   return (
     <MobileLayout showGlow={false}>
-      {/* ── Background orbs ── */}
-      <div className="land-orbs" aria-hidden="true">
-        <div className="land-orbs__blue" />
-        <div className="land-orbs__purple" />
+      <div className="error-orbs" aria-hidden="true">
+        <div className="error-orbs__red" />
+        <div className="error-orbs__purple" />
       </div>
 
-      <main className="land-content">
-        {/* Logo */}
-        <div className="land-logo">
+      <main className="error-content">
+        <div className="error-icon">
           <svg
             width="32"
             height="32"
@@ -24,46 +22,22 @@ export default function Home() {
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
 
-        <h1 className="land-title">Social Hub</h1>
-        <p className="land-tagline">Temukan orang baru di sekitarmu</p>
-
-        {/* QR instruction card */}
-        <div className="land-card glass">
-          <div className="land-card__icon">📱</div>
-          <p className="land-card__text">
-            Scan QR code di meja
-            <br />
-            untuk mulai check-in
-          </p>
-        </div>
-
-        <div className="land-steps">
-          <div className="land-step">
-            <span className="land-step__num">1</span>
-            <span className="land-step__text">Buka kamera HP</span>
-          </div>
-          <div className="land-step">
-            <span className="land-step__num">2</span>
-            <span className="land-step__text">Arahkan ke QR di meja</span>
-          </div>
-          <div className="land-step">
-            <span className="land-step__num">3</span>
-            <span className="land-step__text">Otomatis masuk app</span>
-          </div>
-        </div>
-
-        <p className="land-footer">
-          Chat anonim · Sementara · Auto-hapus saat logout
+        <h1 className="error-title">Akses Tidak Valid</h1>
+        <p className="error-description">
+          Aplikasi ini hanya dapat diakses melalui QR Code.
+          <br />
+          Silakan scan QR Code yang tersedia di lokasi Anda untuk memulai sesi.
         </p>
       </main>
 
       <style jsx>{`
-        .land-orbs {
+        .error-orbs {
           position: absolute;
           inset: 0;
           overflow: hidden;
@@ -71,21 +45,21 @@ export default function Home() {
           z-index: 0;
         }
 
-        .land-orbs__blue {
+        .error-orbs__red {
           position: absolute;
           width: 300px;
           height: 300px;
           border-radius: 50%;
           background: radial-gradient(
             circle,
-            rgba(56, 100, 255, 0.4) 0%,
+            rgba(255, 56, 100, 0.4) 0%,
             transparent 70%
           );
           top: -80px;
           left: -60px;
         }
 
-        .land-orbs__purple {
+        .error-orbs__purple {
           position: absolute;
           width: 240px;
           height: 240px;
@@ -99,7 +73,7 @@ export default function Home() {
           right: -50px;
         }
 
-        .land-content {
+        .error-content {
           position: relative;
           z-index: 1;
           flex: 1;
@@ -108,98 +82,35 @@ export default function Home() {
           align-items: center;
           justify-content: center;
           padding: 40px 28px;
-          gap: 14px;
+          gap: 16px;
           text-align: center;
         }
 
-        .land-logo {
+        .error-icon {
           width: 72px;
           height: 72px;
           border-radius: 24px;
-          background: var(--gradient-brand);
+          background: linear-gradient(135deg, #ff3864 0%, #ff6b38 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 8px 32px rgba(56, 100, 255, 0.45);
-          margin-bottom: 4px;
+          box-shadow: 0 8px 32px rgba(255, 56, 100, 0.45);
+          margin-bottom: 8px;
         }
 
-        .land-title {
-          font-size: 28px;
+        .error-title {
+          font-size: 24px;
           font-weight: 800;
           color: white;
         }
 
-        .land-tagline {
+        .error-description {
           font-size: 15px;
-          color: rgba(255, 255, 255, 0.55);
-          font-weight: 500;
-        }
-
-        .land-card {
-          padding: 24px 28px;
-          border-radius: 20px;
-          margin-top: 16px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .land-card__icon {
-          font-size: 40px;
-        }
-
-        .land-card__text {
-          font-size: 16px;
-          font-weight: 700;
-          color: white;
-          line-height: 1.5;
-        }
-
-        .land-steps {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-top: 8px;
-          width: 100%;
-          max-width: 260px;
-        }
-
-        .land-step {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .land-step__num {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          background: rgba(56, 100, 255, 0.25);
-          border: 1px solid rgba(56, 100, 255, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 13px;
-          font-weight: 700;
-          color: #6ac8ff;
-          flex-shrink: 0;
-        }
-
-        .land-step__text {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.55);
-          font-weight: 500;
-          text-align: left;
-        }
-
-        .land-footer {
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.3);
-          margin-top: 20px;
+          color: rgba(255, 255, 255, 0.7);
+          line-height: 1.6;
         }
       `}</style>
     </MobileLayout>
   );
 }
+

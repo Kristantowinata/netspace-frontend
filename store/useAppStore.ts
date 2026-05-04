@@ -37,8 +37,8 @@ const initialState = {
   age: "",
   gender: null as string | null,
   interests: [] as Interest[],
-  location: "kopiloka",
-  locationName: "Kopiloka",
+  location: "koktong",
+  locationName: "Koktong",
 };
 
 export const useAppStore = create<AppState>((set) => ({

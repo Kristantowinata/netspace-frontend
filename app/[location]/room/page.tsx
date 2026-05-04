@@ -60,7 +60,7 @@ const MOCK_USERS: MockUser[] = [
 
 /**
  * Derive a human-readable location name from the URL slug.
- * e.g. "kopiloka" → "Kopiloka", "kopi-braga" → "Kopi Braga"
+ * e.g. "koktong" → "Koktong", "kopi-braga" → "Kopi Braga"
  */
 function formatLocationName(slug: string): string {
   return slug
@@ -158,7 +158,7 @@ export default function RoomPage() {
               name={user.name}
               emoji={user.emoji}
               interests={user.interests}
-              onChat={() => router.push(`/chat/${user.slug}`)}
+              onChat={() => router.push(`/${location}/chat/${user.slug}`)}
               onTap={() => {
                 /* TODO: open profile detail */
               }}
@@ -177,7 +177,7 @@ export default function RoomPage() {
       {/* ── Public Room (sticky) ── */}
       <div className="room-public-sticky">
         <PublicRoomCard
-          onJoin={() => router.push(`/room/public`)}
+          onJoin={() => router.push(`/${location}/room/public`)}
         />
       </div>
 

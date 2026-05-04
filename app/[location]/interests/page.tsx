@@ -50,7 +50,7 @@ export default function InterestsPage() {
     if (!isValid) return;
     const selectedInterests = INTERESTS.filter((i) => selected.has(i.label));
     setInterests(selectedInterests);
-    router.push(`/room/${location}`);
+    router.push(`/${location}/room`);
   };
 
   return (

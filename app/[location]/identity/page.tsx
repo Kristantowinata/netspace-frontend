@@ -11,7 +11,7 @@ import { useAppStore } from "@/store/useAppStore";
 
 export default function IdentityPage() {
   const router = useRouter();
-  const { locationName, setIdentity } = useAppStore();
+  const { location, locationName, setIdentity } = useAppStore();
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function IdentityPage() {
   const handleSubmit = () => {
     if (!isValid) return;
     setIdentity(name, age, gender!);
-    router.push("/interests");
+    router.push(`/${location}/interests`);
   };
 
   return (

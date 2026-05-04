@@ -53,13 +53,13 @@ const MOCK_CHATS: ChatPreview[] = [
 
 export default function ChatsPage() {
   const router = useRouter();
-  const locationName = useAppStore((s) => s.locationName);
+  const { location, locationName } = useAppStore();
 
   const handleChatClick = (chat: ChatPreview) => {
     if (chat.type === "dm") {
-      router.push(`/chat/${chat.id}`);
+      router.push(`/${location}/chat/${chat.id}`);
     } else {
-      router.push(`/group/${chat.id}`);
+      router.push(`/${location}/group/${chat.id}`);
     }
   };
 
