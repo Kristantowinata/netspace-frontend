@@ -43,12 +43,18 @@ export default function InterestsPage() {
     });
   };
 
-  const totalSelected = selected.size;
+  const hasCustom = showCustom && customInterest.trim().length > 0;
+  const totalSelected = selected.size + (hasCustom ? 1 : 0);
   const isValid = totalSelected >= 1;
 
   const handleSubmit = () => {
     if (!isValid) return;
     const selectedInterests = INTERESTS.filter((i) => selected.has(i.label));
+    
+    if (hasCustom) {
+      selectedInterests.push({ emoji: "✨", label: customInterest.trim() });
+    }
+    
     setInterests(selectedInterests);
     router.push(`/${location}/room`);
   };
