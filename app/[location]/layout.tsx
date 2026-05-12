@@ -1,11 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
-
-// Daftar lokasi yang valid. Jika nama tempat tidak ada di sini, akses ditolak.
-const VALID_LOCATIONS = ["koktong", "kopiloka", "kopi-braga"];
 
 export default function LocationLayout({
   children,
@@ -16,18 +13,48 @@ export default function LocationLayout({
   const router = useRouter();
   const pathname = usePathname();
   const locationSlug = params.location as string;
+
   const name = useAppStore((s) => s.name);
-  
-  const isValidLocation = VALID_LOCATIONS.includes(locationSlug);
-  
+
+  const [isValidLocation, setIsValidLocation] = useState<boolean | null>(null);
+
   const isIdentityPage = pathname === `/${locationSlug}/identity`;
   const isRootLocationPage = pathname === `/${locationSlug}`;
-  const isAuthorized = name || isIdentityPage || isRootLocationPage;
+  const isAuthorized = !!name || isIdentityPage || isRootLocationPage;
 
   useEffect(() => {
-    // 1. Validasi Lokasi (Mencegah /random/identity)
+    const checkLocation = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/locations/${locationSlug}`
+        );
+
+        if (!response.ok) {
+          setIsValidLocation(false);
+          return;
+        }
+
+        const data = await response.json();
+        console.log(data);
+
+        setIsValidLocation(data.isActive);
+      } catch (err) {
+        console.error(err);
+        setIsValidLocation(false);
+      }
+    };
+
+    if (locationSlug) {
+      checkLocation();
+    }
+  }, [locationSlug]);
+
+  useEffect(() => {
+    if (isValidLocation === null) return; // still loading
+
+    // 1. invalid location
     if (!isValidLocation) {
-      router.replace("/"); // Lempar ke halaman "Akses Tidak Valid"
+      router.replace("/");
       return;
     }
 

@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
 import UserCard from "@/components/ui/UserCard";
 import PublicRoomCard from "@/components/ui/PublicRoomCard";
 import UserProfileDrawer from "@/components/ui/UserProfileDrawer";
-
-/* ──────────────────────────────────────────
-   Types
-   ────────────────────────────────────────── */
 
 interface Interest {
   emoji: string;
@@ -25,54 +21,17 @@ interface MockUser {
   interests: Interest[];
 }
 
-/* ──────────────────────────────────────────
-   Mock data — will be replaced by API/WS
-   ────────────────────────────────────────── */
+interface GetUsersResponse {
+  users: MockUser[];
+  onlineCount: number;
+}
 
-const MOCK_USERS: MockUser[] = [
-  {
-    id: "1",
-    slug: "ken-o",
-    name: "Ken O",
-    emoji: "👩‍🎨",
-    interests: [
-      { emoji: "☕", label: "Kopi" },
-      { emoji: "📚", label: "Buku" },
-    ],
-  },
-  {
-    id: "2",
-    slug: "kristanto",
-    name: "Kristanto",
-    emoji: "🧑‍💻",
-    interests: [
-      { emoji: "💻", label: "Tech" },
-      { emoji: "🎮", label: "Gaming" },
-    ],
-  },
-  {
-    id: "3",
-    slug: "steven",
-    name: "Steven",
-    emoji: "👩‍🚀",
-    interests: [{ emoji: "🎵", label: "Musik" }],
-  },
-];
-
-/**
- * Derive a human-readable location name from the URL slug.
- * e.g. "koktong" → "Koktong", "kopi-braga" → "Kopi Braga"
- */
 function formatLocationName(slug: string): string {
   return slug
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
-
-/* ──────────────────────────────────────────
-   Component
-   ────────────────────────────────────────── */
 
 export default function RoomPage() {
   const params = useParams();
@@ -83,27 +42,76 @@ export default function RoomPage() {
   const [activeTab, setActiveTab] = useState("Semua");
   const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
 
-  // Online count = other users + self
-  const onlineCount = MOCK_USERS.length + 1;
+  const [users, setUsers] = useState<MockUser[]>([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Dynamic interest tabs from active users' pool
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+
+        const res = await fetch(
+          `http://localhost:8080/api/locations/${location}/users`,
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch users");
+        }
+
+        const data: GetUsersResponse = await res.json();
+
+        setUsers(data.users);
+        setOnlineCount(data.onlineCount);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [location]);
+
+  /* ──────────────────────────────────────────
+     Dynamic interests
+     ────────────────────────────────────────── */
+
   const uniqueInterests = useMemo(() => {
     const seen = new Map<string, Interest>();
-    MOCK_USERS.forEach((u) =>
+
+    users.forEach((u) =>
       u.interests.forEach((i) => {
         if (!seen.has(i.label)) seen.set(i.label, i);
       })
     );
-    return Array.from(seen.values());
-  }, []);
 
-  // Filter users by active tab
+    return Array.from(seen.values());
+  }, [users]);
+
+  /* ──────────────────────────────────────────
+     Filter users by tab
+     ────────────────────────────────────────── */
+
   const filteredUsers = useMemo(() => {
-    if (activeTab === "Semua") return MOCK_USERS;
-    return MOCK_USERS.filter((u) =>
+    if (activeTab === "Semua") return users;
+
+    return users.filter((u) =>
       u.interests.some((i) => i.label === activeTab)
     );
-  }, [activeTab]);
+  }, [activeTab, users]);
+
+  /* ──────────────────────────────────────────
+     UI
+     ────────────────────────────────────────── */
+
+  if (loading) {
+    return (
+      <MobileLayout>
+        <div className="p-4 text-white">Loading...</div>
+      </MobileLayout>
+    );
+  }
 
   return (
     <MobileLayout showGlow={false}>

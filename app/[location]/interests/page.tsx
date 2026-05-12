@@ -10,23 +10,32 @@ import Input from "@/components/ui/Input";
 import { useAppStore } from "@/store/useAppStore";
 
 const INTERESTS = [
-  { emoji: "☕", label: "Kopi" },
-  { emoji: "🎮", label: "Gaming" },
-  { emoji: "📚", label: "Buku" },
-  { emoji: "🎵", label: "Musik" },
-  { emoji: "🍜", label: "Kuliner" },
-  { emoji: "✈️", label: "Travel" },
-  { emoji: "💻", label: "Tech" },
-  { emoji: "🎨", label: "Seni" },
-  { emoji: "🏋️", label: "Olahraga" },
-  { emoji: "🎬", label: "Film" },
-  { emoji: "📷", label: "Fotografi" },
-  { emoji: "🌱", label: "Tanaman" },
+  { id: 1, emoji: "☕", label: "Kopi", isCustom: false },
+  { id: 2, emoji: "🎮", label: "Gaming", isCustom: false },
+  { id: 3, emoji: "📚", label: "Buku", isCustom: false },
+  { id: 4, emoji: "🎵", label: "Musik", isCustom: false },
+  { id: 5, emoji: "🍜", label: "Kuliner", isCustom: false },
+  { id: 6, emoji: "✈️", label: "Travel", isCustom: false },
+  { id: 7, emoji: "💻", label: "Tech", isCustom: false },
+  { id: 8, emoji: "🎨", label: "Seni", isCustom: false },
+  { id: 9, emoji: "🏋️", label: "Olahraga", isCustom: false },
+  { id: 10, emoji: "🎬", label: "Film", isCustom: false },
+  { id: 11, emoji: "📷", label: "Fotografi", isCustom: false },
+  { id: 12, emoji: "🌱", label: "Tanaman", isCustom: false },
 ];
+
+function formatNameToSlug(name: string): string {
+  return name
+    .toLowerCase()             
+    .trim()                     
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')       
+    .replace(/-+/g, '-');       
+}
 
 export default function InterestsPage() {
   const router = useRouter();
-  const { location, setInterests } = useAppStore();
+  const { location, name, age, gender, setInterests } = useAppStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCustom, setShowCustom] = useState(false);
   const [customInterest, setCustomInterest] = useState("");
@@ -47,17 +56,71 @@ export default function InterestsPage() {
   const totalSelected = selected.size + (hasCustom ? 1 : 0);
   const isValid = totalSelected >= 1;
 
-  const handleSubmit = () => {
-    if (!isValid) return;
-    const selectedInterests = INTERESTS.filter((i) => selected.has(i.label));
-    
-    if (hasCustom) {
-      selectedInterests.push({ emoji: "✨", label: customInterest.trim() });
+const handleSubmit = async () => {
+  if (!isValid) return;
+
+  const selectedInterests = INTERESTS.filter((i) =>
+    selected.has(i.label)
+  );
+
+  if (hasCustom) {
+    selectedInterests.push({
+      id: -1,
+      emoji: "✨",
+      label: customInterest.trim(),
+      isCustom: true,
+    });
+  }
+
+  try {
+    const payload = {
+      locationSlug: location,
+      name: name,
+      slug: formatNameToSlug(name),
+      age: Number(age),
+      gender: gender,
+      interests: selectedInterests,
+    };
+
+    console.log("payload: ", payload);
+
+    const response = await fetch(
+      "http://localhost:8080/api/sessions/check-in",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to check in");
     }
-    
+
+    const data = await response.json();
+
+    console.log(data);
+
+    // Store session token in cookie
+    await fetch("/api/auth/session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sessionToken: data.sessionToken,
+      }),
+    });
+
     setInterests(selectedInterests);
+
     router.push(`/${location}/room`);
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <MobileLayout showGlow={false}>
