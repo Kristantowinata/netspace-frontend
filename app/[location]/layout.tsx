@@ -23,6 +23,8 @@ export default function LocationLayout({
   const isAuthorized = !!name || isIdentityPage || isRootLocationPage;
 
   useEffect(() => {
+    const FALLBACK_LOCATIONS = ["koktong", "kopiloka", "kopi-braga"];
+
     const checkLocation = async () => {
       try {
         const response = await fetch(
@@ -38,9 +40,10 @@ export default function LocationLayout({
         console.log(data);
 
         setIsValidLocation(data.isActive);
-      } catch (err) {
-        console.error(err);
-        setIsValidLocation(false);
+      } catch {
+        // Backend not reachable — fallback to hardcoded valid locations
+        console.warn("[LocationLayout] Backend unreachable, using fallback validation");
+        setIsValidLocation(FALLBACK_LOCATIONS.includes(locationSlug));
       }
     };
 
