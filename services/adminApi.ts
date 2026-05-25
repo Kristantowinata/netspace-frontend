@@ -37,12 +37,13 @@ export async function loginAdmin(
 
   await delay(800);
 
-  // Mock: accept any password for demo
-  if (username === "kopiloka.sudirman") {
+  // Mock: accept any username + password for demo
+  // TODO: Replace with real API validation
+  if (username && password) {
     return { success: true, admin: MOCK_ADMIN };
   }
 
-  return { success: false, error: "Username tidak ditemukan" };
+  return { success: false, error: "Username dan password harus diisi" };
 }
 
 // ── Analytics ──

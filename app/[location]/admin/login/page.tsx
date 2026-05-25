@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
               id="username"
               type="text"
               className="login-input"
-              placeholder="kopiloka.sudirman"
+              placeholder="Username admin"
               autoComplete="username"
               required
               value={username}
