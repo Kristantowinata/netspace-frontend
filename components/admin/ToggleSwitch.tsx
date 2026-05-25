@@ -16,73 +16,31 @@ export default function ToggleSwitch({
   inactiveLabel = "Nonaktif",
 }: ToggleSwitchProps) {
   return (
-    <label className="toggle-switch">
+    <label className="inline-flex items-center gap-2.5 cursor-pointer">
       <input
         type="checkbox"
-        className="toggle-switch__input"
+        className="sr-only"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />
-      <span className={`toggle-switch__track ${checked ? "toggle-switch__track--on" : ""}`}>
-        <span className="toggle-switch__knob" />
+      <span
+        className={`relative w-11 h-6 rounded-full shrink-0 transition-all duration-200 ${
+          checked
+            ? "bg-admin-primary/40 border border-admin-primary/50"
+            : "bg-transparent border border-white/15"
+        }`}
+      >
+        <span
+          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full transition-all duration-200 ${
+            checked
+              ? "left-[22px] bg-admin-accent shadow-[0_0_10px_rgba(122,168,255,0.5)]"
+              : "left-[3px] bg-admin-text-muted"
+          }`}
+        />
       </span>
-      <span className="toggle-switch__label">
+      <span className="text-[13px] text-admin-text-body">
         {checked ? activeLabel : inactiveLabel}
       </span>
-
-      <style jsx>{`
-        .toggle-switch {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          cursor: pointer;
-        }
-
-        .toggle-switch__input {
-          position: absolute;
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-
-        .toggle-switch__track {
-          position: relative;
-          width: 44px;
-          height: 24px;
-          border-radius: 12px;
-          background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          transition: all 0.2s ease;
-          flex-shrink: 0;
-        }
-
-        .toggle-switch__track--on {
-          background: rgba(79, 110, 255, 0.4);
-          border-color: rgba(79, 110, 255, 0.5);
-        }
-
-        .toggle-switch__knob {
-          position: absolute;
-          top: 2px;
-          left: 3px;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: var(--admin-text-muted, #94A3B8);
-          transition: all 0.2s ease;
-        }
-
-        .toggle-switch__track--on .toggle-switch__knob {
-          left: 22px;
-          background: var(--admin-accent, #7aa8ff);
-          box-shadow: 0 0 10px rgba(122, 168, 255, 0.5);
-        }
-
-        .toggle-switch__label {
-          font-size: 13px;
-          color: var(--admin-text-body, #CBD5E1);
-        }
-      `}</style>
     </label>
   );
 }

@@ -14,60 +14,15 @@ export default function SearchInput({
   placeholder = "Cari...",
 }: SearchInputProps) {
   return (
-    <div className="search-input">
-      <span className="search-input__icon">🔍</span>
+    <div className="relative max-w-[280px] w-full max-[900px]:max-w-full">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] pointer-events-none">🔍</span>
       <input
         type="text"
-        className="search-input__field"
+        className="w-full py-2.5 pr-3.5 pl-9 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white font-[inherit] text-[13px] outline-none transition-[border-color,background] duration-150 placeholder:text-admin-text-muted focus:border-admin-accent focus:bg-white/[0.06]"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-
-      <style jsx>{`
-        .search-input {
-          position: relative;
-          max-width: 280px;
-          width: 100%;
-        }
-
-        .search-input__icon {
-          position: absolute;
-          left: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 13px;
-          pointer-events: none;
-        }
-
-        .search-input__field {
-          width: 100%;
-          padding: 10px 14px 10px 36px;
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          color: var(--admin-text, #fff);
-          font-family: inherit;
-          font-size: 13px;
-          outline: none;
-          transition: border-color 0.15s, background 0.15s;
-        }
-
-        .search-input__field::placeholder {
-          color: var(--admin-text-muted, #94A3B8);
-        }
-
-        .search-input__field:focus {
-          border-color: var(--admin-accent, #7aa8ff);
-          background: rgba(255, 255, 255, 0.06);
-        }
-
-        @media (max-width: 900px) {
-          .search-input {
-            max-width: 100%;
-          }
-        }
-      `}</style>
     </div>
   );
 }

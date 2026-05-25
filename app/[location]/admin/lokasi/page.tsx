@@ -22,17 +22,17 @@ export default function LokasiPage() {
 
   return (
     <AdminLayout>
-      <div className="lokasi">
+      <div>
         {/* Header */}
-        <div className="lokasi__header">
-          <h1 className="lokasi__title">Lokasi & QR</h1>
-          <p className="lokasi__subtitle">
+        <div className="mb-7">
+          <h1 className="text-2xl font-extrabold text-white mb-1 tracking-tight">Lokasi &amp; QR</h1>
+          <p className="text-[13px] text-admin-text-muted leading-normal">
             Kelola informasi dan QR code check-in untuk <strong>{locInfo.name}</strong>.
           </p>
         </div>
 
         {/* Content Grid */}
-        <div className="lokasi__grid">
+        <div className="grid grid-cols-2 gap-6 max-[1100px]:grid-cols-1">
           <LocationInfoCard
             name={locInfo.name}
             address={locInfo.address}
@@ -49,38 +49,6 @@ export default function LokasiPage() {
           />
         </div>
       </div>
-
-      <style jsx>{`
-        .lokasi__header {
-          margin-bottom: 28px;
-        }
-
-        .lokasi__title {
-          font-size: 24px;
-          font-weight: 800;
-          color: var(--admin-text, #fff);
-          margin-bottom: 4px;
-          letter-spacing: -0.02em;
-        }
-
-        .lokasi__subtitle {
-          font-size: 13px;
-          color: var(--admin-text-muted, #94A3B8);
-          line-height: 1.5;
-        }
-
-        .lokasi__grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
-
-        @media (max-width: 1100px) {
-          .lokasi__grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </AdminLayout>
   );
 }

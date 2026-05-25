@@ -10,52 +10,23 @@ interface TimeFilterProps {
 
 export default function TimeFilter({ options, active, onChange }: TimeFilterProps) {
   return (
-    <div className="time-filter" role="tablist">
+    <div className="inline-flex gap-0.5 p-1 rounded-[10px] bg-white/[0.03]" role="tablist">
       {options.map((opt) => (
         <button
           key={opt}
           type="button"
           role="tab"
           aria-selected={opt === active}
-          className={`time-filter__btn ${opt === active ? "time-filter__btn--active" : ""}`}
+          className={`py-[7px] px-[18px] rounded-lg font-[inherit] text-[13px] font-semibold border cursor-pointer transition-all duration-150 ${
+            opt === active
+              ? "bg-admin-primary/15 text-admin-accent border-admin-primary/30"
+              : "bg-transparent text-admin-text-muted border-transparent hover:text-admin-text-body"
+          }`}
           onClick={() => onChange(opt)}
         >
           {opt}
         </button>
       ))}
-
-      <style jsx>{`
-        .time-filter {
-          display: inline-flex;
-          gap: 2px;
-          padding: 4px;
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.03);
-        }
-
-        .time-filter__btn {
-          padding: 7px 18px;
-          border-radius: 8px;
-          font-family: inherit;
-          font-size: 13px;
-          font-weight: 600;
-          border: 1px solid transparent;
-          background: transparent;
-          color: var(--admin-text-muted, #94A3B8);
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .time-filter__btn:hover:not(.time-filter__btn--active) {
-          color: var(--admin-text-body, #CBD5E1);
-        }
-
-        .time-filter__btn--active {
-          background: rgba(79, 110, 255, 0.15);
-          color: var(--admin-accent, #7aa8ff);
-          border-color: rgba(79, 110, 255, 0.3);
-        }
-      `}</style>
     </div>
   );
 }

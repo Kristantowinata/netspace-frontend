@@ -15,12 +15,12 @@ export default function AnalyticsPage() {
 
   return (
     <AdminLayout>
-      <div className="analytics">
+      <div>
         {/* Header */}
-        <div className="analytics__header">
+        <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
           <div>
-            <h1 className="analytics__title">Analytics</h1>
-            <p className="analytics__subtitle">Ringkasan aktivitas dan performa lokasi.</p>
+            <h1 className="text-2xl font-extrabold text-white mb-1 tracking-tight">Analytics</h1>
+            <p className="text-[13px] text-admin-text-muted">Ringkasan aktivitas dan performa lokasi.</p>
           </div>
           <TimeFilter
             options={TIME_OPTIONS}
@@ -30,7 +30,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Metrics */}
-        <div className="analytics__metrics">
+        <div className="grid grid-cols-4 gap-4 mb-6 max-[1100px]:grid-cols-2">
           {MOCK_METRICS.map((m, i) => (
             <MetricCard
               key={i}
@@ -43,58 +43,11 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Charts */}
-        <div className="analytics__charts">
+        <div className="grid grid-cols-[1.5fr_1fr] gap-5 max-[1100px]:grid-cols-1">
           <BarChart title="Check-in per Jam" data={MOCK_HOURLY_CHECKINS} />
           <InterestRankList title="Top Minat" items={MOCK_TOP_INTERESTS} />
         </div>
       </div>
-
-      <style jsx>{`
-        .analytics__header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          margin-bottom: 28px;
-          flex-wrap: wrap;
-          gap: 16px;
-        }
-
-        .analytics__title {
-          font-size: 24px;
-          font-weight: 800;
-          color: var(--admin-text, #fff);
-          margin-bottom: 4px;
-          letter-spacing: -0.02em;
-        }
-
-        .analytics__subtitle {
-          font-size: 13px;
-          color: var(--admin-text-muted, #94A3B8);
-        }
-
-        .analytics__metrics {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-          margin-bottom: 24px;
-        }
-
-        .analytics__charts {
-          display: grid;
-          grid-template-columns: 1.5fr 1fr;
-          gap: 20px;
-        }
-
-        @media (max-width: 1100px) {
-          .analytics__metrics {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
-          .analytics__charts {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </AdminLayout>
   );
 }

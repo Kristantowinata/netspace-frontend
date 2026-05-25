@@ -9,40 +9,13 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ label, variant = "online" }: StatusBadgeProps) {
   return (
-    <span className="status-badge">
-      <span className="status-badge__dot" />
+    <span
+      className={`inline-flex items-center gap-1.5 px-3.5 py-[5px] rounded-full text-xs font-semibold text-admin-success border border-admin-success/20 ${
+        variant === "live" ? "bg-admin-success/[0.12]" : "bg-admin-success/10"
+      }`}
+    >
+      <span className="w-[7px] h-[7px] rounded-full bg-admin-success shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-admin-pulse-shadow" />
       {label}
-
-      <style jsx>{`
-        .status-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 14px;
-          border-radius: 9999px;
-          font-size: 12px;
-          font-weight: 600;
-          background: ${variant === "live"
-            ? "rgba(52, 211, 153, 0.12)"
-            : "rgba(52, 211, 153, 0.1)"};
-          color: var(--admin-success, #34D399);
-          border: 1px solid rgba(52, 211, 153, 0.2);
-        }
-
-        .status-badge__dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: var(--admin-success, #34D399);
-          box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
-          50% { opacity: 0.5; box-shadow: 0 0 4px rgba(52, 211, 153, 0.3); }
-        }
-      `}</style>
     </span>
   );
 }

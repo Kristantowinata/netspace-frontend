@@ -23,12 +23,10 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
   const [activeUsersCount, setActiveUsersCount] = useState<number | null>(null);
 
   useEffect(() => {
-    // Initial fetch
     getActiveUsers().then((data) => {
       setActiveUsersCount(data.length);
     }).catch(() => {});
 
-    // Poll every 15 seconds to keep sidebar badge fresh
     const interval = setInterval(() => {
       getActiveUsers().then((data) => {
         setActiveUsersCount(data.length);
@@ -43,7 +41,7 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
       href: `/${location}/admin/analytics`,
       label: "Analytics",
       icon: (
-        <svg className="sidebar__ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-[18px] h-[18px] transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 20V10M12 20V4M6 20v-6" />
         </svg>
       )
@@ -52,7 +50,7 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
       href: `/${location}/admin/lokasi`,
       label: "Lokasi & QR",
       icon: (
-        <svg className="sidebar__ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-[18px] h-[18px] transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <rect x="7" y="7" width="3" height="3" />
           <rect x="14" y="7" width="3" height="3" />
@@ -65,7 +63,7 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
       href: `/${location}/admin/users`,
       label: "Users Aktif",
       icon: (
-        <svg className="sidebar__ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-[18px] h-[18px] transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -81,11 +79,11 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
   };
 
   return (
-    <aside className="sidebar">
+    <aside className="sticky top-0 h-screen w-[260px] min-w-[260px] max-[1100px]:w-[220px] max-[1100px]:min-w-[220px] flex flex-col px-4 py-6 bg-[linear-gradient(180deg,rgba(10,15,34,0.95)_0%,rgba(8,12,28,0.98)_100%)] backdrop-blur-[30px] border-r border-white/5 shadow-[inset_-1px_0_0_rgba(255,255,255,0.02),8px_0_32px_rgba(0,0,0,0.3)] z-20">
       {/* Platform Branding */}
-      <div className="sidebar__brand">
-        <div className="sidebar__logo-container">
-          <svg className="sidebar__logo-svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <div className="flex items-center gap-2.5 px-2 py-1 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-admin-primary/[0.08] border border-admin-primary/20 flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(79,110,255,0.15)]">
+          <svg className="w-5 h-5" width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="9" stroke="url(#logoGrad)" strokeWidth="2.5" />
             <path d="M12 7L16 12L12 17L8 12Z" fill="url(#logoGrad)" />
             <defs>
@@ -96,36 +94,36 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
             </defs>
           </svg>
         </div>
-        <div className="sidebar__brand-text">
-          <span className="sidebar__brand-platform">NETSPACE</span>
-          <span className="sidebar__brand-sub">PORTAL PARTNER</span>
+        <div className="flex flex-col gap-px">
+          <span className="text-[13.5px] font-extrabold text-white tracking-[0.15em] leading-tight">NETSPACE</span>
+          <span className="text-[9px] font-bold text-admin-accent tracking-[0.08em]">PORTAL PARTNER</span>
         </div>
       </div>
 
-      {/* Workspace / Location Switcher Indicator */}
-      <div className="sidebar__location-card">
-        <div className="sidebar__location-avatar">
+      {/* Location Card */}
+      <div className="flex items-center gap-2.5 py-2.5 px-3 mx-1 mb-[18px] bg-white/[0.025] border border-white/5 rounded-[10px] transition-all duration-200 hover:bg-white/[0.04] hover:border-white/[0.08]">
+        <div className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[15px] shrink-0">
           {locationAvatar}
         </div>
-        <div className="sidebar__location-info">
-          <span className="sidebar__location-name" title={locationName}>
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-[12.5px] font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis" title={locationName}>
             {locationName}
           </span>
-          <span className="sidebar__location-status">
-            <span className="sidebar__status-dot" />
+          <span className="flex items-center gap-[5px] text-[10.5px] text-admin-text-muted">
+            <span className="w-[5px] h-[5px] rounded-full bg-admin-success shadow-[0_0_6px_var(--color-admin-success)]" />
             Online
           </span>
         </div>
       </div>
 
       {/* Divider */}
-      <div className="sidebar__divider" />
+      <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.06)_10%,rgba(255,255,255,0.06)_90%,transparent)] mx-1 mb-3.5" />
 
       {/* Label */}
-      <span className="sidebar__section-label">NAVIGASI UTAMA</span>
+      <span className="text-[9px] font-extrabold tracking-[0.12em] text-white/[0.25] px-2.5 mb-2">NAVIGASI UTAMA</span>
 
       {/* Navigation */}
-      <nav className="sidebar__nav">
+      <nav className="flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           const isUsersPage = item.label === "Users Aktif";
@@ -133,12 +131,18 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
             <Link
               key={item.href}
               href={item.href}
-              className={`sidebar__link ${isActive ? "sidebar__link--active" : ""}`}
+              className={`relative flex items-center gap-3 py-2.5 px-3 rounded-lg text-[13.5px] font-medium no-underline overflow-hidden transition-all duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:rounded-r-[3px] before:bg-admin-primary before:transition-all before:duration-[250ms] before:ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                isActive
+                  ? "text-white bg-[linear-gradient(90deg,rgba(79,110,255,0.15)_0%,rgba(79,110,255,0.03)_100%)] border border-admin-primary/25 font-semibold before:h-[18px] before:opacity-100 before:shadow-[0_0_8px_rgba(79,110,255,0.8)] [&_svg]:text-admin-accent [&_svg]:drop-shadow-[0_0_4px_rgba(122,168,255,0.4)]"
+                  : "text-white/60 border border-transparent before:h-3.5 before:opacity-0 before:scale-y-[0.4] hover:text-white hover:bg-white/[0.03] hover:border-white/5 hover:translate-x-1 [&:hover_svg]:text-white"
+              }`}
             >
-              <span className="sidebar__ico">{item.icon}</span>
-              <span className="sidebar__link-text">{item.label}</span>
+              <span className="flex items-center justify-center w-5 h-5 shrink-0">{item.icon}</span>
+              <span className="whitespace-nowrap">{item.label}</span>
               {isUsersPage && activeUsersCount !== null && (
-                <span className="sidebar__badge">{activeUsersCount}</span>
+                <span className="ml-auto text-[11px] font-bold bg-admin-success/[0.12] text-admin-success px-[7px] py-0.5 rounded-md border border-admin-success/20 animate-badge-pulse">
+                  {activeUsersCount}
+                </span>
               )}
             </Link>
           );
@@ -146,22 +150,22 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
       </nav>
 
       {/* Spacer */}
-      <div className="sidebar__spacer" />
+      <div className="flex-1" />
 
       {/* Footer */}
-      <div className="sidebar__footer">
-        <div className="sidebar__divider" style={{ marginBottom: "16px" }} />
-        
-        {/* Logged in User Profile Card */}
-        <div className="sidebar__user-profile">
-          <div className="sidebar__user-avatar">
+      <div>
+        <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.06)_10%,rgba(255,255,255,0.06)_90%,transparent)] mx-1 mb-4" />
+
+        {/* User Profile */}
+        <div className="flex items-center gap-2.5 px-2 py-1 mb-3">
+          <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,rgba(79,110,255,0.2),rgba(122,80,255,0.15))] border border-white/10 flex items-center justify-center text-[15px] shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
             {adminAvatar || "🧑‍💼"}
           </div>
-          <div className="sidebar__user-info">
-            <span className="sidebar__user-name" title={adminName || "Admin"}>
+          <div className="flex flex-col gap-px min-w-0">
+            <span className="text-[12.5px] font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis" title={adminName || "Admin"}>
               {adminName || "Admin"}
             </span>
-            <span className="sidebar__user-role">
+            <span className="text-[10.5px] text-admin-text-muted">
               {adminRole || "Partner"}
             </span>
           </div>
@@ -169,348 +173,19 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
 
         <button
           type="button"
-          className="sidebar__logout"
+          className="flex items-center gap-2.5 w-full py-2.5 px-3 rounded-lg text-[13px] font-medium font-[inherit] text-red-400/85 bg-transparent border border-transparent cursor-pointer transition-all duration-200 hover:bg-red-400/[0.06] hover:border-red-400/15 hover:text-admin-danger hover:translate-x-1"
           onClick={handleLogout}
         >
-          <span className="sidebar__ico">
-            <svg className="sidebar__ico-svg logout-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <span className="flex items-center justify-center w-5 h-5 shrink-0">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
           </span>
-          <span className="sidebar__link-text">Logout</span>
+          <span className="whitespace-nowrap">Logout</span>
         </button>
       </div>
-
-      <style jsx>{`
-        .sidebar {
-          position: sticky;
-          top: 0;
-          height: 100vh;
-          width: var(--admin-sidebar-width, 260px);
-          min-width: var(--admin-sidebar-width, 260px);
-          display: flex;
-          flex-direction: column;
-          padding: 24px 16px;
-          background: linear-gradient(180deg, rgba(10, 15, 34, 0.95) 0%, rgba(8, 12, 28, 0.98) 100%);
-          backdrop-filter: blur(30px);
-          -webkit-backdrop-filter: blur(30px);
-          border-right: 1px solid rgba(255, 255, 255, 0.05);
-          box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.02), 8px 0 32px rgba(0, 0, 0, 0.3);
-          z-index: 20;
-        }
-
-        /* Brand */
-        .sidebar__brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 4px 8px;
-          margin-bottom: 16px;
-        }
-
-        .sidebar__logo-container {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          background: rgba(79, 110, 255, 0.08);
-          border: 1px solid rgba(79, 110, 255, 0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          box-shadow: 0 4px 12px rgba(79, 110, 255, 0.15);
-        }
-
-        .sidebar__logo-svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        .sidebar__brand-text {
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-        }
-
-        .sidebar__brand-platform {
-          font-size: 13.5px;
-          font-weight: 800;
-          color: #ffffff;
-          letter-spacing: 0.15em;
-          line-height: 1.2;
-        }
-
-        .sidebar__brand-sub {
-          font-size: 9px;
-          font-weight: 700;
-          color: var(--admin-accent, #7aa8ff);
-          letter-spacing: 0.08em;
-        }
-
-        /* Location Card */
-        .sidebar__location-card {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 12px;
-          margin: 0 4px 18px 4px;
-          background: rgba(255, 255, 255, 0.025);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
-          transition: all 0.2s ease;
-        }
-
-        .sidebar__location-card:hover {
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(255, 255, 255, 0.08);
-        }
-
-        .sidebar__location-avatar {
-          width: 28px;
-          height: 28px;
-          border-radius: 6px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 15px;
-          flex-shrink: 0;
-        }
-
-        .sidebar__location-info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          min-width: 0;
-        }
-
-        .sidebar__location-name {
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #ffffff;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .sidebar__location-status {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 10.5px;
-          color: var(--admin-text-muted, #94A3B8);
-        }
-
-        .sidebar__status-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: var(--admin-success, #34D399);
-          box-shadow: 0 0 6px var(--admin-success, #34D399);
-        }
-
-        /* Divider */
-        .sidebar__divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06) 10%, rgba(255, 255, 255, 0.06) 90%, transparent);
-          margin: 0 4px 14px 4px;
-        }
-
-        /* Section label */
-        .sidebar__section-label {
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 0.12em;
-          color: rgba(148, 163, 184, 0.45);
-          padding: 0 10px 8px;
-        }
-
-        /* Nav */
-        .sidebar__nav {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .sidebar__link {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          font-size: 13.5px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.6);
-          border: 1px solid transparent;
-          text-decoration: none;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          overflow: hidden;
-        }
-
-        .sidebar__link:hover {
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.03);
-          border-color: rgba(255, 255, 255, 0.05);
-          transform: translateX(4px);
-        }
-
-        .sidebar__link--active {
-          color: #ffffff;
-          background: linear-gradient(90deg, rgba(79, 110, 255, 0.15) 0%, rgba(79, 110, 255, 0.03) 100%);
-          border: 1px solid rgba(79, 110, 255, 0.25);
-          font-weight: 600;
-        }
-
-        /* Active line indicator inside button bounds */
-        .sidebar__link::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%) scaleY(0.4);
-          width: 3px;
-          height: 14px;
-          border-radius: 0 3px 3px 0;
-          background: var(--admin-primary, #4F6EFF);
-          opacity: 0;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .sidebar__link--active::before {
-          height: 18px;
-          transform: translateY(-50%) scaleY(1);
-          opacity: 1;
-          box-shadow: 0 0 8px rgba(79, 110, 255, 0.8);
-        }
-
-        .sidebar__ico {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 20px;
-          height: 20px;
-          flex-shrink: 0;
-        }
-
-        .sidebar__ico-svg {
-          width: 18px;
-          height: 18px;
-          transition: stroke 0.2s ease;
-        }
-
-        .sidebar__link:hover .sidebar__ico-svg {
-          color: #ffffff;
-        }
-
-        .sidebar__link--active .sidebar__ico-svg {
-          color: var(--admin-accent, #7aa8ff);
-          filter: drop-shadow(0 0 4px rgba(122, 168, 255, 0.4));
-        }
-
-        .sidebar__link-text {
-          white-space: nowrap;
-        }
-
-        .sidebar__badge {
-          margin-left: auto;
-          font-size: 11px;
-          font-weight: 700;
-          background: rgba(52, 211, 153, 0.12);
-          color: var(--admin-success, #34D399);
-          padding: 2px 7px;
-          border-radius: 6px;
-          border: 1px solid rgba(52, 211, 153, 0.2);
-          animation: badge-pulse 2s infinite;
-        }
-
-        @keyframes badge-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
-          70% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
-        }
-
-        .sidebar__spacer {
-          flex: 1;
-        }
-
-        /* Footer User Profile */
-        .sidebar__user-profile {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 4px 8px;
-          margin-bottom: 12px;
-        }
-
-        .sidebar__user-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, rgba(79, 110, 255, 0.2), rgba(122, 80, 255, 0.15));
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 15px;
-          flex-shrink: 0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .sidebar__user-info {
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-          min-width: 0;
-        }
-
-        .sidebar__user-name {
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #ffffff;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .sidebar__user-role {
-          font-size: 10.5px;
-          color: var(--admin-text-muted, #94A3B8);
-        }
-
-        /* Logout button */
-        .sidebar__logout {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-          padding: 10px 12px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 500;
-          font-family: inherit;
-          color: rgba(248, 113, 113, 0.85);
-          background: transparent;
-          border: 1px solid transparent;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .sidebar__logout:hover {
-          background: rgba(248, 113, 113, 0.06);
-          border-color: rgba(248, 113, 113, 0.15);
-          color: var(--admin-danger, #F87171);
-          transform: translateX(4px);
-        }
-
-        .logout-svg {
-          width: 16px;
-          height: 16px;
-        }
-      `}</style>
     </aside>
   );
 }

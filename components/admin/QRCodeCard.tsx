@@ -10,9 +10,9 @@ interface QRCodeCardProps {
 
 export default function QRCodeCard({ token, label, onDownload }: QRCodeCardProps) {
   return (
-    <div className="qr-card admin-card">
+    <div className="flex flex-col items-center gap-4 bg-white/[0.035] backdrop-blur-[20px] border border-white/[0.06] rounded-xl p-6">
       {/* QR Code Frame */}
-      <div className="qr-card__frame">
+      <div className="w-[240px] h-[240px] bg-white rounded-xl flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
         <svg
           width="200"
           height="200"
@@ -90,67 +90,21 @@ export default function QRCodeCard({ token, label, onDownload }: QRCodeCardProps
       </div>
 
       {/* Label */}
-      <p className="qr-card__label">{label}</p>
+      <p className="text-sm font-semibold text-white text-center">{label}</p>
 
       {/* Token */}
-      <p className="qr-card__token-row">
-        Token: <code className="qr-card__token">{token}</code>
+      <p className="text-[13px] text-admin-text-muted">
+        Token: <code className="font-mono text-admin-accent bg-admin-accent/10 px-2 py-[3px] rounded text-[13px]">{token}</code>
       </p>
 
       {/* Download Button */}
       <button
         type="button"
-        className="admin-btn admin-btn-outline qr-card__btn"
+        className="inline-flex items-center justify-center gap-1.5 w-full mt-1 px-5 py-2.5 rounded-lg font-[inherit] text-[13px] font-semibold cursor-pointer transition-all duration-200 outline-none bg-transparent text-admin-text-body border border-white/[0.12] hover:border-white/25 hover:text-white hover:-translate-y-px active:translate-y-0"
         onClick={onDownload}
       >
         ⬇ Download QR
       </button>
-
-      <style jsx>{`
-        .qr-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .qr-card__frame {
-          width: 240px;
-          height: 240px;
-          background: #fff;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        }
-
-        .qr-card__label {
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--admin-text, #fff);
-          text-align: center;
-        }
-
-        .qr-card__token-row {
-          font-size: 13px;
-          color: var(--admin-text-muted, #94A3B8);
-        }
-
-        .qr-card__token {
-          font-family: 'SF Mono', 'Fira Code', monospace;
-          color: var(--admin-accent, #7aa8ff);
-          background: rgba(122, 168, 255, 0.1);
-          padding: 3px 8px;
-          border-radius: 4px;
-          font-size: 13px;
-        }
-
-        .qr-card__btn {
-          width: 100%;
-          margin-top: 4px;
-        }
-      `}</style>
     </div>
   );
 }
