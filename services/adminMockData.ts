@@ -4,6 +4,37 @@
 // TODO: Replace with real API responses when backend is ready
 // ═══════════════════════════════════════════
 
+// ── Location Name Mapping ──
+const LOCATION_NAMES: Record<string, { name: string; address: string; partnerId: string; avatar: string }> = {
+  koktong: {
+    name: "Koktong",
+    address: "Jl. Pangeran Jayakarta No. 73, Jakarta Barat",
+    partnerId: "KKT-001",
+    avatar: "🍵",
+  },
+  kopiloka: {
+    name: "Kopiloka Sudirman",
+    address: "Jl. Jend. Sudirman No. 123, Jakarta Selatan",
+    partnerId: "KPL-001",
+    avatar: "☕",
+  },
+  "kopi-braga": {
+    name: "Kopi Braga",
+    address: "Jl. Braga No. 45, Bandung",
+    partnerId: "KBG-001",
+    avatar: "☕",
+  },
+};
+
+export function getLocationInfo(slug: string) {
+  return LOCATION_NAMES[slug] || {
+    name: slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+    address: "-",
+    partnerId: slug.toUpperCase().slice(0, 3) + "-001",
+    avatar: "📍",
+  };
+}
+
 export interface AdminUser {
   id: string;
   name: string;

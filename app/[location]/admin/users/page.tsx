@@ -41,7 +41,10 @@ export default function UsersPage() {
         {/* Header */}
         <div className="users-page__header">
           <div className="users-page__title-row">
-            <h1 className="users-page__title">Users Aktif</h1>
+            <div>
+              <h1 className="users-page__title">Users Aktif</h1>
+              <p className="users-page__subtitle">Kelola user yang sedang check-in di lokasi.</p>
+            </div>
             <LivePill count={users.length} />
           </div>
           <SearchInput
@@ -54,9 +57,9 @@ export default function UsersPage() {
         {/* Table */}
         <div className="users-page__table-card admin-card" style={{ padding: 0, overflow: "hidden" }}>
           {loading ? (
-            <p className="users-page__loading">Memuat data...</p>
+            <p className="users-page__state">Memuat data...</p>
           ) : filtered.length === 0 ? (
-            <p className="users-page__empty">Tidak ada user yang cocok</p>
+            <p className="users-page__state">Tidak ada user yang cocok</p>
           ) : (
             <table className="users-table">
               <thead>
@@ -71,7 +74,6 @@ export default function UsersPage() {
               <tbody>
                 {filtered.map((user) => (
                   <tr key={user.id}>
-                    {/* Nama */}
                     <td>
                       <div className="users-table__user">
                         <div className="users-table__avatar">{user.avatar}</div>
@@ -81,31 +83,19 @@ export default function UsersPage() {
                         </div>
                       </div>
                     </td>
-
-                    {/* Gender */}
                     <td className="admin-hide-mobile">
                       <span className="admin-pill">{user.gender}</span>
                     </td>
-
-                    {/* Minat */}
                     <td>
                       <div className="users-table__interests">
                         {user.interests.map((int, i) => (
-                          <span key={i} className="admin-chip">
-                            {int.emoji} {int.label}
-                          </span>
+                          <span key={i} className="admin-chip">{int.emoji} {int.label}</span>
                         ))}
                       </div>
                     </td>
-
-                    {/* Durasi */}
                     <td>
-                      <span className="users-table__duration">
-                        {user.duration} menit
-                      </span>
+                      <span className="users-table__duration">{user.duration} menit</span>
                     </td>
-
-                    {/* Aksi */}
                     <td style={{ textAlign: "right" }}>
                       <button
                         type="button"
@@ -123,7 +113,6 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Force Logout Modal */}
       <ForceLogoutModal
         isOpen={modalUser !== null}
         userName={modalUser || ""}
@@ -135,25 +124,32 @@ export default function UsersPage() {
         .users-page__header {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 18px;
           margin-bottom: 24px;
         }
 
         .users-page__title-row {
           display: flex;
-          align-items: center;
-          gap: 14px;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
         }
 
         .users-page__title {
-          font-size: 22px;
+          font-size: 24px;
           font-weight: 800;
           color: var(--admin-text, #fff);
+          letter-spacing: -0.02em;
+          margin-bottom: 4px;
         }
 
-        .users-page__loading,
-        .users-page__empty {
-          padding: 48px 24px;
+        .users-page__subtitle {
+          font-size: 13px;
+          color: var(--admin-text-muted, #94A3B8);
+        }
+
+        .users-page__state {
+          padding: 56px 24px;
           text-align: center;
           color: var(--admin-text-muted, #94A3B8);
           font-size: 14px;
@@ -166,19 +162,19 @@ export default function UsersPage() {
         }
 
         .users-table thead th {
-          padding: 12px 16px;
+          padding: 13px 16px;
           font-size: 11px;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           color: var(--admin-text-muted, #94A3B8);
           text-align: left;
-          background: rgba(255, 255, 255, 0.02);
-          border-bottom: 1px solid var(--admin-card-border, rgba(255,255,255,0.08));
+          background: rgba(255, 255, 255, 0.015);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .users-table tbody tr {
-          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.03);
           transition: background 0.15s ease;
         }
 
@@ -195,7 +191,6 @@ export default function UsersPage() {
           vertical-align: middle;
         }
 
-        /* User cell */
         .users-table__user {
           display: flex;
           align-items: center;
@@ -206,11 +201,12 @@ export default function UsersPage() {
           width: 36px;
           height: 36px;
           border-radius: 10px;
-          background: linear-gradient(135deg, rgba(79, 110, 255, 0.35), rgba(43, 63, 168, 0.25));
+          background: linear-gradient(135deg, rgba(79, 110, 255, 0.2), rgba(122, 80, 255, 0.15));
+          border: 1px solid rgba(79, 110, 255, 0.15);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 18px;
+          font-size: 17px;
           flex-shrink: 0;
         }
 
@@ -227,18 +223,17 @@ export default function UsersPage() {
         }
 
         .users-table__id {
-          font-size: 12px;
+          font-size: 11.5px;
           color: var(--admin-text-muted, #94A3B8);
+          font-family: 'SF Mono', 'Fira Code', monospace;
         }
 
-        /* Interests */
         .users-table__interests {
           display: flex;
           flex-wrap: wrap;
           gap: 4px;
         }
 
-        /* Duration */
         .users-table__duration {
           font-variant-numeric: tabular-nums;
           color: var(--admin-text-body, #CBD5E1);

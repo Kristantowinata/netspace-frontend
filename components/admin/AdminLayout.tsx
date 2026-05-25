@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAdminStore } from "@/store/useAdminStore";
+import { getLocationInfo } from "@/services/adminMockData";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 
@@ -12,13 +13,16 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
+  const params = useParams();
+  const location = params.location as string;
   const isAuthenticated = useAdminStore((s) => s.isAuthenticated);
+  const locInfo = getLocationInfo(location);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace("/admin/login");
+      router.replace(`/${location}/admin/login`);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, location]);
 
   if (!isAuthenticated) {
     return (
@@ -47,9 +51,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="admin-shell">
-      <AdminSidebar />
+      <AdminSidebar
+        location={location}
+        locationName={locInfo.name}
+        locationAvatar={locInfo.avatar}
+      />
       <div className="admin-shell__main">
-        <AdminTopbar />
+        <AdminTopbar
+          locationName={locInfo.name}
+          locationAvatar={locInfo.avatar}
+        />
         <main className="admin-shell__content">
           {children}
         </main>
@@ -58,7 +69,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <style jsx>{`
         .admin-shell {
           display: grid;
-          grid-template-columns: var(--admin-sidebar-width, 248px) 1fr;
+          grid-template-columns: var(--admin-sidebar-width, 260px) 1fr;
           min-height: 100vh;
           position: relative;
           z-index: 1;
@@ -73,12 +84,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         .admin-shell__content {
           flex: 1;
-          padding: 28px 32px 40px;
+          padding: 28px 36px 48px;
         }
 
         @media (max-width: 1100px) {
           .admin-shell {
-            grid-template-columns: 200px 1fr;
+            grid-template-columns: 220px 1fr;
+          }
+
+          .admin-shell__content {
+            padding: 24px 20px 36px;
           }
         }
       `}</style>

@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAdminStore } from "@/store/useAdminStore";
 
 export default function AdminIndexPage() {
   const router = useRouter();
+  const params = useParams();
+  const location = params.location as string;
   const isAuthenticated = useAdminStore((s) => s.isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/admin/analytics");
+      router.replace(`/${location}/admin/analytics`);
     } else {
-      router.replace("/admin/login");
+      router.replace(`/${location}/admin/login`);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, location]);
 
   return (
     <div style={{

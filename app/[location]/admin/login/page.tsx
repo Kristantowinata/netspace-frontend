@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAdminStore } from "@/store/useAdminStore";
+import { getLocationInfo } from "@/services/adminMockData";
 import { loginAdmin } from "@/services/adminApi";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const params = useParams();
+  const location = params.location as string;
+  const locInfo = getLocationInfo(location);
   const login = useAdminStore((s) => s.login);
 
   const [username, setUsername] = useState("");
@@ -26,7 +30,7 @@ export default function AdminLoginPage() {
 
     if (result.success && result.admin) {
       login(result.admin.name, result.admin.role, result.admin.plan, result.admin.avatar);
-      router.push("/admin/analytics");
+      router.push(`/${location}/admin/analytics`);
     } else {
       setError(result.error || "Login gagal");
     }
@@ -38,23 +42,21 @@ export default function AdminLoginPage() {
       <div className="login-card" data-screen-label="Admin Login">
         {/* Brand */}
         <div className="login-brand">
-          <div className="login-brand__logo">N</div>
+          <div className="login-brand__logo">{locInfo.avatar}</div>
           <div className="login-brand__text">
-            <span className="login-brand__name">NetSpace</span>
+            <span className="login-brand__name">{locInfo.name}</span>
             <span className="login-brand__sub">Admin Dashboard</span>
           </div>
         </div>
 
         {/* Heading */}
-        <h1 className="login-title">Admin Dashboard Login</h1>
+        <h1 className="login-title">Selamat Datang</h1>
         <p className="login-subtitle">
-          Masuk dengan kredensial yang diberikan oleh tim NetSpace.
+          Masuk dengan kredensial yang diberikan oleh tim NetSpace untuk mengelola <strong>{locInfo.name}</strong>.
         </p>
 
         {/* Error */}
-        {error && (
-          <div className="login-error">{error}</div>
-        )}
+        {error && <div className="login-error">{error}</div>}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="login-form">
@@ -75,12 +77,8 @@ export default function AdminLoginPage() {
           <div className="login-field">
             <label className="login-label" htmlFor="password">
               Password
-              <button
-                type="button"
-                className="login-toggle-pw"
-                onClick={() => setShowPw(!showPw)}
-              >
-                {showPw ? "Hide" : "Show"}
+              <button type="button" className="login-toggle-pw" onClick={() => setShowPw(!showPw)}>
+                {showPw ? "Sembunyikan" : "Tampilkan"}
               </button>
             </label>
             <input
@@ -100,12 +98,17 @@ export default function AdminLoginPage() {
             className="login-submit"
             disabled={loading || !username || !password}
           >
-            {loading ? "Memproses..." : "Masuk"}
+            {loading ? (
+              <span className="login-submit__loading">
+                <span className="login-submit__spinner" />
+                Memproses...
+              </span>
+            ) : "Masuk"}
           </button>
         </form>
 
         <p className="login-footnote">
-          Lupa kredensial? Hubungi support NetSpace.
+          Lupa kredensial? Hubungi <span className="login-footnote__link">support NetSpace</span>.
         </p>
       </div>
 
@@ -123,13 +126,15 @@ export default function AdminLoginPage() {
         .login-card {
           width: 100%;
           max-width: 420px;
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid var(--admin-card-border, rgba(255,255,255,0.08));
-          border-radius: 16px;
-          padding: 40px 36px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          background: rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(32px);
+          -webkit-backdrop-filter: blur(32px);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 20px;
+          padding: 44px 38px;
+          box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         /* Brand */
@@ -137,26 +142,25 @@ export default function AdminLoginPage() {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 28px;
+          margin-bottom: 32px;
         }
 
         .login-brand__logo {
-          width: 42px;
-          height: 42px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #4F6EFF, #2B3FA8);
+          width: 46px;
+          height: 46px;
+          border-radius: 14px;
+          background: linear-gradient(135deg, rgba(79, 110, 255, 0.2), rgba(122, 80, 255, 0.15));
+          border: 1px solid rgba(79, 110, 255, 0.25);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
-          font-weight: 800;
-          color: white;
-          box-shadow: 0 6px 18px rgba(79, 110, 255, 0.35);
+          font-size: 22px;
         }
 
         .login-brand__text {
           display: flex;
           flex-direction: column;
+          gap: 2px;
         }
 
         .login-brand__name {
@@ -167,46 +171,48 @@ export default function AdminLoginPage() {
 
         .login-brand__sub {
           font-size: 12px;
+          font-weight: 500;
           color: var(--admin-text-muted, #94A3B8);
         }
 
         /* Heading */
         .login-title {
-          font-size: 22px;
+          font-size: 24px;
           font-weight: 800;
           color: var(--admin-text, #fff);
-          margin-bottom: 6px;
+          margin-bottom: 8px;
+          letter-spacing: -0.02em;
         }
 
         .login-subtitle {
-          font-size: 13px;
+          font-size: 13.5px;
           color: var(--admin-text-muted, #94A3B8);
-          margin-bottom: 24px;
-          line-height: 1.5;
+          margin-bottom: 28px;
+          line-height: 1.6;
         }
 
         /* Error */
         .login-error {
-          padding: 10px 14px;
-          border-radius: 8px;
-          background: rgba(248, 113, 113, 0.1);
-          border: 1px solid rgba(248, 113, 113, 0.25);
+          padding: 11px 16px;
+          border-radius: 10px;
+          background: rgba(248, 113, 113, 0.08);
+          border: 1px solid rgba(248, 113, 113, 0.2);
           color: var(--admin-danger, #F87171);
           font-size: 13px;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
         }
 
         /* Form */
         .login-form {
           display: flex;
           flex-direction: column;
-          gap: 18px;
+          gap: 20px;
         }
 
         .login-field {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 7px;
         }
 
         .login-label {
@@ -217,20 +223,21 @@ export default function AdminLoginPage() {
           font-weight: 600;
           color: var(--admin-text-body, #CBD5E1);
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.06em;
         }
 
         .login-toggle-pw {
           background: none;
           border: none;
           font-family: inherit;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 500;
           color: var(--admin-accent, #7aa8ff);
           cursor: pointer;
           padding: 0;
           text-transform: none;
           letter-spacing: normal;
+          transition: color 0.15s;
         }
 
         .login-toggle-pw:hover {
@@ -238,45 +245,46 @@ export default function AdminLoginPage() {
         }
 
         .login-input {
-          padding: 12px 14px;
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 12px 16px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           color: var(--admin-text, #fff);
           font-family: inherit;
           font-size: 14px;
           outline: none;
-          transition: border-color 0.15s, background 0.15s;
+          transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
         }
 
         .login-input::placeholder {
-          color: var(--admin-text-muted, #94A3B8);
+          color: rgba(148, 163, 184, 0.6);
         }
 
         .login-input:focus {
-          border-color: var(--admin-accent, #7aa8ff);
-          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(79, 110, 255, 0.4);
+          background: rgba(255, 255, 255, 0.05);
+          box-shadow: 0 0 0 3px rgba(79, 110, 255, 0.1);
         }
 
         /* Submit */
         .login-submit {
-          margin-top: 6px;
+          margin-top: 8px;
           padding: 13px;
-          border-radius: 10px;
+          border-radius: 12px;
           background: linear-gradient(135deg, #4F6EFF, #2B3FA8);
           color: white;
           font-family: inherit;
-          font-size: 15px;
+          font-size: 14.5px;
           font-weight: 700;
           border: none;
           cursor: pointer;
-          box-shadow: 0 8px 20px rgba(79, 110, 255, 0.35);
+          box-shadow: 0 8px 24px rgba(79, 110, 255, 0.3);
           transition: all 0.2s ease;
         }
 
         .login-submit:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 10px 28px rgba(79, 110, 255, 0.45);
+          box-shadow: 0 12px 32px rgba(79, 110, 255, 0.4);
         }
 
         .login-submit:active:not(:disabled) {
@@ -284,8 +292,23 @@ export default function AdminLoginPage() {
         }
 
         .login-submit:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .login-submit__loading {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .login-submit__spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
         }
 
         /* Footnote */
@@ -293,7 +316,16 @@ export default function AdminLoginPage() {
           text-align: center;
           font-size: 12px;
           color: var(--admin-text-muted, #94A3B8);
-          margin-top: 24px;
+          margin-top: 28px;
+        }
+
+        .login-footnote__link {
+          color: var(--admin-accent, #7aa8ff);
+          cursor: pointer;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>

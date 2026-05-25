@@ -20,7 +20,8 @@ export default function LocationLayout({
 
   const isIdentityPage = pathname === `/${locationSlug}/identity`;
   const isRootLocationPage = pathname === `/${locationSlug}`;
-  const isAuthorized = !!name || isIdentityPage || isRootLocationPage;
+  const isAdminPage = pathname.startsWith(`/${locationSlug}/admin`);
+  const isAuthorized = !!name || isIdentityPage || isRootLocationPage || isAdminPage;
 
   useEffect(() => {
     const FALLBACK_LOCATIONS = ["koktong", "kopiloka", "kopi-braga"];
@@ -69,7 +70,7 @@ export default function LocationLayout({
   }, [isValidLocation, isAuthorized, locationSlug, router]);
 
   // Jangan render anak komponen sampai pengecekan selesai (mencegah kedipan UI)
-  if (!isValidLocation || !isAuthorized) {
+  if (!isValidLocation || (!isAuthorized && !isAdminPage)) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#111953" }}>
         <div className="spinner" style={{ width: "36px", height: "36px", border: "3px solid rgba(255,255,255,0.2)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />

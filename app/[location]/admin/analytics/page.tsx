@@ -10,15 +10,6 @@ import { MOCK_METRICS, MOCK_HOURLY_CHECKINS, MOCK_TOP_INTERESTS } from "@/servic
 
 const TIME_OPTIONS = ["Hari ini", "7 Hari", "30 Hari"];
 
-function getFormattedDate(): string {
-  const now = new Date();
-  const months = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-  ];
-  return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-}
-
 export default function AnalyticsPage() {
   const [timeFilter, setTimeFilter] = useState("Hari ini");
 
@@ -28,8 +19,8 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="analytics__header">
           <div>
-            <h1 className="analytics__title">Analytics Overview</h1>
-            <p className="analytics__date">Hari ini · {getFormattedDate()}</p>
+            <h1 className="analytics__title">Analytics</h1>
+            <p className="analytics__subtitle">Ringkasan aktivitas dan performa lokasi.</p>
           </div>
           <TimeFilter
             options={TIME_OPTIONS}
@@ -63,19 +54,20 @@ export default function AnalyticsPage() {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          margin-bottom: 24px;
+          margin-bottom: 28px;
           flex-wrap: wrap;
           gap: 16px;
         }
 
         .analytics__title {
-          font-size: 22px;
+          font-size: 24px;
           font-weight: 800;
           color: var(--admin-text, #fff);
           margin-bottom: 4px;
+          letter-spacing: -0.02em;
         }
 
-        .analytics__date {
+        .analytics__subtitle {
           font-size: 13px;
           color: var(--admin-text-muted, #94A3B8);
         }
