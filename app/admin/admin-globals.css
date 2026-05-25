@@ -1,0 +1,298 @@
+/* ═══════════════════════════════════════════
+   NetSpace Admin — Design System
+   ═══════════════════════════════════════════ */
+
+/* ── Design Tokens ── */
+:root {
+  --admin-bg: #080c18;
+  --admin-bg-2: #0a0f22;
+  --admin-card: rgba(255, 255, 255, 0.05);
+  --admin-card-solid: #0f1530;
+  --admin-card-border: rgba(255, 255, 255, 0.08);
+
+  --admin-primary: #4F6EFF;
+  --admin-primary-2: #2B3FA8;
+  --admin-accent: #7aa8ff;
+  --admin-accent-fill: rgba(122, 168, 255, 0.15);
+
+  --admin-text: #ffffff;
+  --admin-text-body: #CBD5E1;
+  --admin-text-muted: #94A3B8;
+
+  --admin-success: #34D399;
+  --admin-warning: #FBBF24;
+  --admin-danger: #F87171;
+
+  --admin-sidebar-width: 248px;
+  --admin-topbar-height: 64px;
+  --admin-radius: 12px;
+  --admin-radius-sm: 8px;
+  --admin-radius-lg: 16px;
+  --admin-radius-full: 9999px;
+}
+
+/* ── Base ── */
+.admin-root {
+  min-height: 100vh;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Atmospheric Background ── */
+.admin-root::before,
+.admin-root::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.admin-root::before {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(79, 110, 255, 0.35) 0%, transparent 70%);
+  top: -200px;
+  left: -150px;
+}
+
+.admin-root::after {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(122, 80, 255, 0.28) 0%, transparent 70%);
+  bottom: -100px;
+  right: -100px;
+}
+
+/* ── Glass Utilities ── */
+.admin-glass {
+  background: var(--admin-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--admin-card-border);
+}
+
+.admin-glass-solid {
+  background: var(--admin-card-solid);
+  border: 1px solid var(--admin-card-border);
+}
+
+/* ── Button Base ── */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--admin-radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-btn:hover {
+  transform: translateY(-1px);
+}
+
+.admin-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Button Variants ── */
+.admin-btn-primary {
+  background: linear-gradient(135deg, var(--admin-primary), var(--admin-primary-2));
+  color: white;
+  box-shadow: 0 8px 20px rgba(79, 110, 255, 0.35);
+}
+
+.admin-btn-primary:hover {
+  box-shadow: 0 10px 28px rgba(79, 110, 255, 0.45);
+}
+
+.admin-btn-outline {
+  background: transparent;
+  color: var(--admin-text-body);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-btn-outline:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--admin-text);
+}
+
+.admin-btn-ghost {
+  background: transparent;
+  color: var(--admin-text-body);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.admin-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-btn-danger {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--admin-danger);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.admin-btn-danger:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.admin-btn-danger-solid {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: white;
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.3);
+}
+
+.admin-btn-danger-solid:hover {
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.45);
+}
+
+.admin-btn-danger-solid:disabled {
+  background: #7a2929;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── Badge Utilities ── */
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--admin-radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-badge-active {
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--admin-success);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.admin-badge-inactive {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--admin-danger);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.admin-badge-online {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--admin-success);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+/* ── Interest Chip ── */
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--admin-accent-fill);
+  color: var(--admin-accent);
+  border: 1px solid rgba(122, 168, 255, 0.2);
+}
+
+/* ── Gender Pill ── */
+.admin-pill {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: var(--admin-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--admin-text-body);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ── Card ── */
+.admin-card {
+  background: var(--admin-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--admin-card-border);
+  border-radius: var(--admin-radius);
+  padding: 24px;
+}
+
+/* ── Scrollbar ── */
+.admin-root ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-root ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.admin-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Animations ── */
+@keyframes admin-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes admin-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes admin-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes admin-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  :root {
+    --admin-sidebar-width: 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-hide-mobile {
+    display: none !important;
+  }
+}
