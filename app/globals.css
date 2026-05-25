@@ -60,6 +60,21 @@
   --color-danger-text: var(--danger-text);
   --color-border: var(--border);
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Admin Dashboard Tokens */
+  --color-admin-bg: #080c18;
+  --color-admin-bg-2: #0a0f22;
+  --color-admin-card-solid: #0f1530;
+  --color-admin-primary: #4F6EFF;
+  --color-admin-primary-2: #2B3FA8;
+  --color-admin-accent: #7aa8ff;
+  --color-admin-accent-fill: rgba(122, 168, 255, 0.15);
+  --color-admin-text: #ffffff;
+  --color-admin-text-body: #CBD5E1;
+  --color-admin-text-muted: #94A3B8;
+  --color-admin-success: #34D399;
+  --color-admin-warning: #FBBF24;
+  --color-admin-danger: #F87171;
 }
 
 /* ========================================

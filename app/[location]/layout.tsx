@@ -20,9 +20,12 @@ export default function LocationLayout({
 
   const isIdentityPage = pathname === `/${locationSlug}/identity`;
   const isRootLocationPage = pathname === `/${locationSlug}`;
-  const isAuthorized = !!name || isIdentityPage || isRootLocationPage;
+  const isAdminPage = pathname.startsWith(`/${locationSlug}/admin`);
+  const isAuthorized = !!name || isIdentityPage || isRootLocationPage || isAdminPage;
 
   useEffect(() => {
+    const FALLBACK_LOCATIONS = ["koktong", "kopiloka", "kopi-braga"];
+
     const checkLocation = async () => {
       try {
         const response = await fetch(
@@ -38,9 +41,10 @@ export default function LocationLayout({
         console.log(data);
 
         setIsValidLocation(data.isActive);
-      } catch (err) {
-        console.error(err);
-        setIsValidLocation(false);
+      } catch {
+        // Backend not reachable — fallback to hardcoded valid locations
+        console.warn("[LocationLayout] Backend unreachable, using fallback validation");
+        setIsValidLocation(FALLBACK_LOCATIONS.includes(locationSlug));
       }
     };
 
@@ -66,7 +70,7 @@ export default function LocationLayout({
   }, [isValidLocation, isAuthorized, locationSlug, router]);
 
   // Jangan render anak komponen sampai pengecekan selesai (mencegah kedipan UI)
-  if (!isValidLocation || !isAuthorized) {
+  if (!isValidLocation || (!isAuthorized && !isAdminPage)) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#111953" }}>
         <div className="spinner" style={{ width: "36px", height: "36px", border: "3px solid rgba(255,255,255,0.2)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />

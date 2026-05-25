@@ -1,0 +1,132 @@
+/* ═══════════════════════════════════════════
+   NetSpace Admin — Design System (Tailwind v4)
+   ═══════════════════════════════════════════ */
+
+/* ── Base ── */
+.admin-root {
+  min-height: 100vh;
+  background: #080c18;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Atmospheric Background ── */
+.admin-root::before,
+.admin-root::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.admin-root::before {
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(79, 110, 255, 0.22) 0%, transparent 65%);
+  top: -250px;
+  left: -200px;
+}
+
+.admin-root::after {
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(122, 80, 255, 0.18) 0%, transparent 65%);
+  bottom: -150px;
+  right: -150px;
+}
+
+/* ── Scrollbar ── */
+.admin-root ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-root ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.admin-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Keyframes ── */
+@keyframes admin-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes admin-pulse-shadow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
+  50% { opacity: 0.5; box-shadow: 0 0 4px rgba(52, 211, 153, 0.3); }
+}
+
+@keyframes admin-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes admin-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes admin-grow-up {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes admin-badge-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+  70% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+@keyframes admin-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Animation Utilities ── */
+@utility animate-admin-pulse {
+  animation: admin-pulse 2s ease-in-out infinite;
+}
+
+@utility animate-admin-pulse-shadow {
+  animation: admin-pulse-shadow 2s ease-in-out infinite;
+}
+
+@utility animate-admin-fadein {
+  animation: admin-fadein 0.2s ease;
+}
+
+@utility animate-admin-pop {
+  animation: admin-pop 0.25s ease;
+}
+
+@utility animate-admin-grow-up {
+  animation: admin-grow-up 0.5s ease-out forwards;
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+@utility animate-badge-pulse {
+  animation: admin-badge-pulse 2s infinite;
+}
+
+@utility animate-admin-spin {
+  animation: admin-spin 0.8s linear infinite;
+}
