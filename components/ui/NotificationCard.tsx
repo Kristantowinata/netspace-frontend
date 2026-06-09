@@ -13,6 +13,9 @@ interface NotificationCardProps {
   onSecondaryAction?: () => void;
   primaryLabel?: string;
   secondaryLabel?: string;
+  // When provided, the whole card is tappable (e.g. a message notification
+  // opens the DM with the sender).
+  onClick?: () => void;
 }
 
 export default function NotificationCard({
@@ -26,11 +29,19 @@ export default function NotificationCard({
   onSecondaryAction,
   primaryLabel,
   secondaryLabel,
+  onClick,
 }: NotificationCardProps) {
   const hasActions = !!primaryLabel && !!secondaryLabel;
 
   return (
-    <div className={`notif-card ${unread ? "notif-card--unread" : ""}`}>
+    <div
+      className={`notif-card ${unread ? "notif-card--unread" : ""} ${
+        onClick ? "notif-card--clickable" : ""
+      }`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div className="notif-card__row">
         {/* Avatar */}
         <div className="notif-card__avatar" style={{ background: avatarGradient }}>
@@ -83,6 +94,15 @@ export default function NotificationCard({
         .notif-card--unread {
           background: rgba(56, 100, 255, 0.15);
           border-color: rgba(56, 100, 255, 0.25);
+        }
+
+        .notif-card--clickable {
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .notif-card--clickable:active {
+          background: rgba(255, 255, 255, 0.09);
         }
 
         .notif-card__row {

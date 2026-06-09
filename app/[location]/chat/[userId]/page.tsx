@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
@@ -9,78 +9,214 @@ import ChatBubble from "@/components/ui/ChatBubble";
 import ChatInput from "@/components/ui/ChatInput";
 import TypingIndicator from "@/components/ui/TypingIndicator";
 import ConfirmModal from "@/components/ui/ConfirmModal";
-
-/* ──────────────────────────────────────────
-   Types
-   ────────────────────────────────────────── */
+import { useAppStore } from "@/store/useAppStore";
+import { wsClient, useWsEvent } from "@/lib/ws";
+import {
+  EV,
+  type NewMessageEvent,
+  type UserTypingEvent,
+  type GroupCreatedEvent,
+  type MessagesReadEvent,
+} from "@/lib/wsTypes";
 
 interface ChatMessage {
   id: string;
   message: string;
   timestamp: string;
   isMine: boolean;
+  // Read receipt for my own messages: true once the partner has opened the
+  // chat and read them (blue ✓✓). Undefined/false until then (grey ✓✓).
+  isRead?: boolean;
 }
 
-interface UserProfile {
-  name: string;
-  emoji: string;
-  interests: string;
-}
-
-/* ──────────────────────────────────────────
-   Mock user lookup — matches Room Landing
-   ────────────────────────────────────────── */
-
-const USERS: Record<string, UserProfile> = {
-  "ken-o": { name: "Ken O", emoji: "👩‍🎨", interests: "☕ Kopi, 📚 Buku" },
-  "kristanto": { name: "Kristanto", emoji: "🧑‍💻", interests: "💻 Tech, 🎮 Gaming" },
-  "steven": { name: "Steven", emoji: "👩‍🚀", interests: "🎵 Musik" },
-};
-
-/* ──────────────────────────────────────────
-   Component
-   ────────────────────────────────────────── */
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 export default function PrivateChatPage() {
   const params = useParams();
   const router = useRouter();
-  const userId = params.userId as string;
-  const user = USERS[userId] ?? { name: userId, emoji: "👤", interests: "" };
+  const recipientId = params.userId as string;
+  const location = useAppStore((s) => s.location);
+  const sessionToken = useAppStore((s) => s.sessionToken);
+  const setGroup = useAppStore((s) => s.setGroup);
+  const blockUser = useAppStore((s) => s.blockUser);
+  const blockedIds = useAppStore((s) => s.blockedIds);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      message: "Halo broo.. boleh kenalan?",
-      timestamp: "09:35",
-      isMine: false,
-    },
-  ]);
-  // TODO: Replace with WebSocket-driven typing state when backend is ready
-  const showTyping = false;
+  const [partner, setPartner] = useState<{
+    name: string;
+    emoji: string;
+    occupation: string;
+    interests: string;
+    isOnline: boolean;
+  }>({
+    name: "Pengguna",
+    emoji: "👤",
+    occupation: "",
+    interests: "",
+    isOnline: false,
+  });
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [partnerTyping, setPartnerTyping] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const msgIdCounter = useRef(10);
+  const [blockedToast, setBlockedToast] = useState(false);
 
-  // Auto-scroll on new messages
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const stopTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
+
+  // Load the partner's profile + the persisted DM history so reopening the
+  // chat shows past messages instead of an empty thread.
+  useEffect(() => {
+    if (!recipientId) return;
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/chats/${recipientId}/messages`,
+          {
+            headers: sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : undefined,
+          }
+        );
+        if (!res.ok) return;
+        const data: {
+          user: {
+            name: string;
+            emoji: string;
+            occupation: string;
+            interests: string;
+            isOnline: boolean;
+          };
+          messages: ChatMessage[];
+        } = await res.json();
+        setPartner({
+          name: data.user.name,
+          emoji: data.user.emoji,
+          occupation: data.user.occupation,
+          interests: data.user.interests,
+          isOnline: data.user.isOnline,
+        });
+        setMessages(data.messages ?? []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchHistory();
+  }, [recipientId, sessionToken]);
+
+  // Opening this chat means we've read whatever the partner sent us — tell the
+  // server so their bubbles turn blue. Queued if the socket isn't open yet.
+  const markPartnerRead = useCallback(() => {
+    if (!recipientId) return;
+    wsClient.send("mark_read", { senderId: recipientId });
+  }, [recipientId]);
+
+  useEffect(() => {
+    markPartnerRead();
+  }, [markPartnerRead]);
+
+  // ── Incoming ──
+
+  useWsEvent<NewMessageEvent>(EV.NEW_MESSAGE, (data) => {
+    // Only messages for this conversation, and never from blocked users.
+    if (!data.isMine && data.senderId !== recipientId) return;
+    if (!data.isMine && blockedIds.includes(data.senderId)) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: data.id,
+        message: data.message,
+        timestamp: data.timestamp,
+        isMine: data.isMine,
+        // My own just-sent message starts unread (grey ✓✓); it flips to blue
+        // when the partner reads it (messages_read below).
+        isRead: data.isMine ? false : undefined,
+      },
+    ]);
+    if (!data.isMine) {
+      setPartnerTyping(false);
+      // We're looking at the chat, so this incoming message is read on arrival.
+      markPartnerRead();
+    }
+  });
+
+  // The partner opened our chat and read our messages — flip our bubbles blue.
+  useWsEvent<MessagesReadEvent>(EV.MESSAGES_READ, (data) => {
+    if (data.readerId !== recipientId) return;
+    setMessages((prev) =>
+      prev.map((m) => (m.isMine ? { ...m, isRead: true } : m))
+    );
+  });
+
+  useWsEvent<UserTypingEvent>(EV.USER_TYPING, (data) => {
+    if (data.userId !== recipientId) return;
+    setPartnerTyping(true);
+    if (typingClearTimer.current) clearTimeout(typingClearTimer.current);
+    typingClearTimer.current = setTimeout(() => setPartnerTyping(false), 4000);
+  });
+
+  useWsEvent<UserTypingEvent>(EV.USER_STOPPED_TYPING, (data) => {
+    if (data.userId !== recipientId) return;
+    setPartnerTyping(false);
+    if (typingClearTimer.current) clearTimeout(typingClearTimer.current);
+  });
+
+  // Created a group with this user → remember it (we host it) and jump in.
+  useWsEvent<GroupCreatedEvent>(EV.GROUP_CREATED, (data) => {
+    setGroup(data.groupId, { name: data.name, iAmHost: true });
+    router.push(`/${location}/group/${data.groupId}`);
+  });
+
+  // Auto-scroll on new messages / typing.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, showTyping]);
+  }, [messages, partnerTyping]);
 
-  // Handle user sending a message
-  // TODO: Replace with WebSocket emit when backend is ready
+  // ── Outgoing ──
+
   const handleSend = (text: string) => {
-    const now = new Date();
-    const timestamp = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const newId = String(msgIdCounter.current++);
+    wsClient.send("send_message", { recipientId, message: text });
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      wsClient.send("typing_stop", { recipientId });
+    }
+    if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
+  };
 
-    const userMsg: ChatMessage = {
-      id: newId,
-      message: text,
-      timestamp,
-      isMine: true,
-    };
+  const handleTyping = useCallback(() => {
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      wsClient.send("typing_start", { recipientId });
+    }
+    if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
+    stopTypingTimer.current = setTimeout(() => {
+      isTypingRef.current = false;
+      wsClient.send("typing_stop", { recipientId });
+    }, 2000);
+  }, [recipientId]);
 
-    setMessages((prev) => [...prev, userMsg]);
+  const handleCreateGroup = () => {
+    const groupName = `Grup ${partner.name}`;
+    wsClient.send("create_group", {
+      name: groupName,
+      memberIds: [recipientId],
+    });
+    // Navigation happens when the server replies with group_created.
+  };
+
+  const handleConfirmBlock = () => {
+    setShowBlockModal(false);
+    // Filter their messages locally (this session) AND tell the server to stop
+    // delivering anything from them to us. blockUser persists the id so they
+    // stay hidden from every list, even after a refresh.
+    blockUser({ id: recipientId, name: partner.name, emoji: partner.emoji });
+    wsClient.send("block_user", { userId: recipientId });
+    // Show a brief confirmation, then return to the list — where they're now
+    // gone — so the action has clear, visible feedback.
+    setBlockedToast(true);
+    setTimeout(() => router.back(), 1300);
   };
 
   return (
@@ -93,12 +229,13 @@ export default function PrivateChatPage() {
 
       {/* ── Header ── */}
       <PrivateChatHeader
-        userName={user.name}
-        userEmoji={user.emoji}
-        interests={user.interests}
-        isOnline={true}
+        userName={partner.name}
+        userEmoji={partner.emoji}
+        occupation={partner.occupation}
+        interests={partner.interests}
+        isOnline={partner.isOnline}
         onBack={() => router.back()}
-        onCreateGroup={() => {/* TODO: group creation */}}
+        onCreateGroup={handleCreateGroup}
         onBlock={() => setShowBlockModal(true)}
       />
 
@@ -120,16 +257,16 @@ export default function PrivateChatPage() {
             message={msg.message}
             timestamp={msg.timestamp}
             variant={msg.isMine ? "mine" : "other"}
-            senderName={msg.isMine ? "You" : user.name}
-            senderEmoji={user.emoji}
+            senderName={msg.isMine ? "You" : partner.name}
+            senderEmoji={partner.emoji}
             showAvatar={false}
-            readReceipt={msg.isMine}
+            read={msg.isMine ? Boolean(msg.isRead) : undefined}
           />
         ))}
 
         {/* Typing indicator */}
-        {showTyping && (
-          <TypingIndicator senderName={user.name} senderEmoji={user.emoji} />
+        {partnerTyping && (
+          <TypingIndicator senderName={partner.name} senderEmoji={partner.emoji} />
         )}
 
         {/* Scroll anchor */}
@@ -137,7 +274,7 @@ export default function PrivateChatPage() {
       </div>
 
       {/* ── Input ── */}
-      <ChatInput onSend={handleSend} />
+      <ChatInput onSend={handleSend} onTyping={handleTyping} />
 
       {/* ── Bottom Nav ── */}
       <BottomNav />
@@ -148,17 +285,21 @@ export default function PrivateChatPage() {
       {/* ── Block User Modal ── */}
       <ConfirmModal
         isOpen={showBlockModal}
-        icon="⛔"
-        title={`Block ${user.name}?`}
-        description="Kamu tidak akan bisa menerima pesan dari orang ini lagi selama sesi berlangsung."
-        confirmLabel="Block"
+        icon="🚫"
+        title={`Blokir ${partner.name}?`}
+        description={`${partner.name} tidak akan bisa mengirim pesan ke kamu lagi, dan langsung hilang dari daftar orang & chat. Mereka tidak akan diberi tahu. Blokir berlaku selama sesi ini.`}
+        confirmLabel="Blokir"
         variant="danger"
-        onConfirm={() => {
-          setShowBlockModal(false);
-          router.back();
-        }}
+        onConfirm={handleConfirmBlock}
         onCancel={() => setShowBlockModal(false)}
       />
+
+      {/* ── Block confirmation toast ── */}
+      {blockedToast && (
+        <div className="block-toast" role="status">
+          🚫 {partner.name} diblokir. Mereka tidak bisa menghubungi kamu lagi.
+        </div>
+      )}
 
       <style jsx>{`
         /* Background orbs */
@@ -231,6 +372,41 @@ export default function PrivateChatPage() {
         .dm-spacer {
           height: 64px;
           flex-shrink: 0;
+        }
+
+        /* Block confirmation toast */
+        .block-toast {
+          position: fixed;
+          left: 50%;
+          bottom: 90px;
+          transform: translateX(-50%);
+          z-index: 200;
+          max-width: 340px;
+          width: calc(100% - 32px);
+          text-align: center;
+          padding: 12px 16px;
+          border-radius: 14px;
+          background: rgba(20, 22, 48, 0.92);
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 1.45;
+          box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          animation: blockToastIn 0.2s ease;
+        }
+
+        @keyframes blockToastIn {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
         }
       `}</style>
     </MobileLayout>

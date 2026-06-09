@@ -7,9 +7,10 @@ interface AdminState {
   adminRole: string;
   adminPlan: string;
   adminAvatar: string;
+  token: string;
 
   // Actions
-  login: (name: string, role: string, plan: string, avatar: string) => void;
+  login: (name: string, role: string, plan: string, avatar: string, token: string) => void;
   logout: () => void;
 }
 
@@ -21,14 +22,16 @@ export const useAdminStore = create<AdminState>()(
       adminRole: "",
       adminPlan: "",
       adminAvatar: "",
+      token: "",
 
-      login: (name, role, plan, avatar) =>
+      login: (name, role, plan, avatar, token) =>
         set({
           isAuthenticated: true,
           adminName: name,
           adminRole: role,
           adminPlan: plan,
           adminAvatar: avatar,
+          token,
         }),
 
       logout: () =>
@@ -38,6 +41,7 @@ export const useAdminStore = create<AdminState>()(
           adminRole: "",
           adminPlan: "",
           adminAvatar: "",
+          token: "",
         }),
     }),
     {
@@ -63,6 +67,7 @@ export const useAdminStore = create<AdminState>()(
         adminRole: state.adminRole,
         adminPlan: state.adminPlan,
         adminAvatar: state.adminAvatar,
+        token: state.token,
       } as AdminState),
     }
   )

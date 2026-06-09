@@ -1,110 +1,127 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
+import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 
 interface QRCodeCardProps {
-  token: string;
+  // Full URL the QR encodes, e.g. https://app.example.com/kopiloka
+  url: string;
   label: string;
-  onDownload?: () => void;
+  token: string;
+  // Base name for downloaded files (usually the location slug).
+  fileName: string;
 }
 
-export default function QRCodeCard({ token, label, onDownload }: QRCodeCardProps) {
+export default function QRCodeCard({
+  url,
+  label,
+  token,
+  fileName,
+}: QRCodeCardProps) {
+  const svgWrapRef = useRef<HTMLDivElement>(null);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+
+  const triggerDownload = (href: string, name: string) => {
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  // PNG: grab the high-res hidden canvas → data URL.
+  const downloadPng = () => {
+    const canvas = canvasWrapRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    triggerDownload(canvas.toDataURL("image/png"), `${fileName}-qr.png`);
+  };
+
+  // SVG: serialize the rendered <svg> (crisp at any print size).
+  const downloadSvg = () => {
+    const svg = svgWrapRef.current?.querySelector("svg");
+    if (!svg) return;
+    const xml = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
+    const href = URL.createObjectURL(blob);
+    triggerDownload(href, `${fileName}-qr.svg`);
+    setTimeout(() => URL.revokeObjectURL(href), 1000);
+  };
+
+  const valid = !!url;
+
   return (
     <div className="flex flex-col items-center gap-4 bg-white/[0.035] backdrop-blur-[20px] border border-white/[0.06] rounded-xl p-6">
-      {/* QR Code Frame */}
-      <div className="w-[240px] h-[240px] bg-white rounded-xl flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
-        <svg
-          width="200"
-          height="200"
-          viewBox="0 0 200 200"
-          fill="none"
-          aria-label="QR placeholder"
-        >
-          {/* Finder patterns (top-left, top-right, bottom-left) */}
-          <rect x="10" y="10" width="50" height="50" rx="4" fill="#222" />
-          <rect x="16" y="16" width="38" height="38" rx="2" fill="#fff" />
-          <rect x="24" y="24" width="22" height="22" rx="2" fill="#222" />
-
-          <rect x="140" y="10" width="50" height="50" rx="4" fill="#222" />
-          <rect x="146" y="16" width="38" height="38" rx="2" fill="#fff" />
-          <rect x="154" y="24" width="22" height="22" rx="2" fill="#222" />
-
-          <rect x="10" y="140" width="50" height="50" rx="4" fill="#222" />
-          <rect x="16" y="146" width="38" height="38" rx="2" fill="#fff" />
-          <rect x="24" y="154" width="22" height="22" rx="2" fill="#222" />
-
-          {/* Data modules (decorative) */}
-          {[70, 80, 90, 100, 110, 120].map((x) =>
-            [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170].map((y) => (
-              <rect
-                key={`${x}-${y}`}
-                x={x}
-                y={y}
-                width="8"
-                height="8"
-                rx="1"
-                fill={(x + y) % 30 < 15 ? "#222" : "transparent"}
-              />
-            ))
-          )}
-          {[10, 20, 30, 40, 50].map((x) =>
-            [70, 80, 90, 100, 110, 120].map((y) => (
-              <rect
-                key={`b-${x}-${y}`}
-                x={x}
-                y={y}
-                width="8"
-                height="8"
-                rx="1"
-                fill={(x * y) % 20 < 10 ? "#222" : "transparent"}
-              />
-            ))
-          )}
-          {[140, 150, 160, 170].map((x) =>
-            [70, 80, 90, 100, 110, 120].map((y) => (
-              <rect
-                key={`c-${x}-${y}`}
-                x={x}
-                y={y}
-                width="8"
-                height="8"
-                rx="1"
-                fill={(x + y) % 25 < 12 ? "#222" : "transparent"}
-              />
-            ))
-          )}
-          {[70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170].map((x) =>
-            [150, 160, 170].map((y) => (
-              <rect
-                key={`d-${x}-${y}`}
-                x={x}
-                y={y}
-                width="8"
-                height="8"
-                rx="1"
-                fill={(x * 3 + y) % 20 < 10 ? "#222" : "transparent"}
-              />
-            ))
-          )}
-        </svg>
+      {/* QR Code (real, encodes the location URL) */}
+      <div className="w-[240px] h-[240px] bg-white rounded-xl flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.4)] p-4">
+        {valid ? (
+          <div ref={svgWrapRef} className="flex items-center justify-center">
+            <QRCodeSVG
+              value={url}
+              size={208}
+              level="M"
+              marginSize={2}
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+              title={label}
+            />
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">Memuat…</span>
+        )}
       </div>
+
+      {/* Hidden high-res canvas, used only to export a print-quality PNG */}
+      {valid && (
+        <div ref={canvasWrapRef} className="hidden" aria-hidden="true">
+          <QRCodeCanvas
+            value={url}
+            size={1024}
+            level="M"
+            marginSize={2}
+            bgColor="#FFFFFF"
+            fgColor="#000000"
+          />
+        </div>
+      )}
 
       {/* Label */}
       <p className="text-sm font-semibold text-white text-center">{label}</p>
 
+      {/* The encoded URL — so the admin can verify where it points */}
+      {valid && (
+        <p className="text-[12px] text-admin-text-muted text-center break-all">
+          {url}
+        </p>
+      )}
+
       {/* Token */}
       <p className="text-[13px] text-admin-text-muted">
-        Token: <code className="font-mono text-admin-accent bg-admin-accent/10 px-2 py-[3px] rounded text-[13px]">{token}</code>
+        Token:{" "}
+        <code className="font-mono text-admin-accent bg-admin-accent/10 px-2 py-[3px] rounded text-[13px]">
+          {token}
+        </code>
       </p>
 
-      {/* Download Button */}
-      <button
-        type="button"
-        className="inline-flex items-center justify-center gap-1.5 w-full mt-1 px-5 py-2.5 rounded-lg font-[inherit] text-[13px] font-semibold cursor-pointer transition-all duration-200 outline-none bg-transparent text-admin-text-body border border-white/[0.12] hover:border-white/25 hover:text-white hover:-translate-y-px active:translate-y-0"
-        onClick={onDownload}
-      >
-        ⬇ Download QR
-      </button>
+      {/* Download buttons */}
+      <div className="flex gap-2 w-full mt-1">
+        <button
+          type="button"
+          disabled={!valid}
+          className="inline-flex items-center justify-center gap-1.5 flex-1 px-4 py-2.5 rounded-lg font-[inherit] text-[13px] font-semibold cursor-pointer transition-all duration-200 outline-none bg-admin-primary/15 text-admin-accent border border-admin-primary/35 hover:bg-admin-primary/25 hover:-translate-y-px active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={downloadPng}
+        >
+          ⬇ PNG
+        </button>
+        <button
+          type="button"
+          disabled={!valid}
+          className="inline-flex items-center justify-center gap-1.5 flex-1 px-4 py-2.5 rounded-lg font-[inherit] text-[13px] font-semibold cursor-pointer transition-all duration-200 outline-none bg-transparent text-admin-text-body border border-white/[0.12] hover:border-white/25 hover:text-white hover:-translate-y-px active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={downloadSvg}
+        >
+          ⬇ SVG
+        </button>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import React from "react";
 interface PrivateChatHeaderProps {
   userName: string;
   userEmoji: string;
+  occupation?: string;
   interests: string;
   isOnline: boolean;
   onBack: () => void;
@@ -15,12 +16,17 @@ interface PrivateChatHeaderProps {
 export default function PrivateChatHeader({
   userName,
   userEmoji,
+  occupation,
   interests,
   isOnline,
   onBack,
   onCreateGroup,
   onBlock,
 }: PrivateChatHeaderProps) {
+  // Compose "Online · Barista · ☕ Kopi" — skip the empty segments gracefully.
+  const subtitle = [isOnline ? "Online" : "Offline", occupation, interests]
+    .filter((s) => s && s.trim().length > 0)
+    .join(" · ");
   return (
     <div className="pc-header glass-strong">
       <div className="pc-header__inner">
@@ -45,9 +51,7 @@ export default function PrivateChatHeader({
           <p className="pc-header__name">{userName}</p>
           <div className="pc-header__meta">
             {isOnline && <span className="pc-header__dot" />}
-            <p className="pc-header__subtitle">
-              {isOnline ? "Online" : "Offline"} · {interests}
-            </p>
+            <p className="pc-header__subtitle">{subtitle}</p>
           </div>
         </div>
 

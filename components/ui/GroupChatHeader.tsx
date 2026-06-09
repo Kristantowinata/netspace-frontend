@@ -7,6 +7,7 @@ interface GroupChatHeaderProps {
   groupEmoji: string;
   memberCount: number;
   onBack: () => void;
+  onRename?: () => void;
 }
 
 export default function GroupChatHeader({
@@ -14,6 +15,7 @@ export default function GroupChatHeader({
   groupEmoji,
   memberCount,
   onBack,
+  onRename,
 }: GroupChatHeaderProps) {
   return (
     <div className="gc-header glass-strong">
@@ -34,13 +36,22 @@ export default function GroupChatHeader({
           <div className="gc-header__online" />
         </div>
 
-        {/* Info */}
-        <div className="gc-header__info">
-          <p className="gc-header__name">{groupName}</p>
+        {/* Info — tap the name to rename the group */}
+        <button
+          type="button"
+          className="gc-header__info"
+          onClick={onRename}
+          disabled={!onRename}
+          aria-label="Ganti nama grup"
+        >
+          <p className="gc-header__name">
+            {groupName}
+            {onRename && <span className="gc-header__edit">✎</span>}
+          </p>
           <p className="gc-header__subtitle">
             Group Session · {memberCount} anggota
           </p>
-        </div>
+        </button>
       </div>
 
       <style jsx>{`
@@ -97,12 +108,32 @@ export default function GroupChatHeader({
         .gc-header__info {
           flex: 1;
           min-width: 0;
+          background: none;
+          border: none;
+          padding: 0;
+          margin: 0;
+          text-align: left;
+          font-family: inherit;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .gc-header__info:disabled {
+          cursor: default;
         }
 
         .gc-header__name {
           font-size: 15px;
           font-weight: 800;
           color: white;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .gc-header__edit {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.4);
         }
 
         .gc-header__subtitle {
