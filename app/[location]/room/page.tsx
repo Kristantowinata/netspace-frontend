@@ -7,6 +7,9 @@ import BottomNav from "@/components/layout/BottomNav";
 import UserCard from "@/components/ui/UserCard";
 import PublicRoomCard from "@/components/ui/PublicRoomCard";
 import UserProfileDrawer from "@/components/ui/UserProfileDrawer";
+import { useAppStore } from "@/store/useAppStore";
+import { useWsEvent } from "@/lib/ws";
+import { EV, type UserJoinedEvent, type UserLeftEvent } from "@/lib/wsTypes";
 
 interface Interest {
   emoji: string;
@@ -18,6 +21,7 @@ interface MockUser {
   slug: string;
   name: string;
   emoji: string;
+  occupation: string;
   interests: Interest[];
 }
 
@@ -25,6 +29,9 @@ interface GetUsersResponse {
   users: MockUser[];
   onlineCount: number;
 }
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 function formatLocationName(slug: string): string {
   return slug
@@ -42,8 +49,12 @@ export default function RoomPage() {
   const [activeTab, setActiveTab] = useState("Semua");
   const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
 
+  const sessionToken = useAppStore((s) => s.sessionToken);
+  const myId = useAppStore((s) => s.userId);
+  const blockedIds = useAppStore((s) => s.blockedIds);
+  const unreadPublic = useAppStore((s) => s.unreadPublic);
+
   const [users, setUsers] = useState<MockUser[]>([]);
-  const [onlineCount, setOnlineCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,7 +63,12 @@ export default function RoomPage() {
         setLoading(true);
 
         const res = await fetch(
-          `http://localhost:8080/api/locations/${location}/users`,
+          `${API_BASE}/api/locations/${location}/users`,
+          {
+            headers: sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : undefined,
+          },
         );
 
         if (!res.ok) {
@@ -62,7 +78,6 @@ export default function RoomPage() {
         const data: GetUsersResponse = await res.json();
 
         setUsers(data.users);
-        setOnlineCount(data.onlineCount);
       } catch (err) {
         console.error(err);
       } finally {
@@ -71,7 +86,52 @@ export default function RoomPage() {
     };
 
     fetchUsers();
-  }, [location]);
+  }, [location, sessionToken]);
+
+  /* ──────────────────────────────────────────
+     Live roster — people checking in / leaving update the list and the
+     online badge in real time, without a manual refresh.
+     ────────────────────────────────────────── */
+
+  useWsEvent<UserJoinedEvent>(EV.USER_JOINED, (data) => {
+    const u = data.user;
+    // Ignore self and anyone this user has blocked — a blocked person must not
+    // reappear in the roster just because they (re)joined.
+    if (!u?.id || u.id === myId || blockedIds.includes(u.id)) return;
+    setUsers((prev) =>
+      prev.some((p) => p.id === u.id)
+        ? prev
+        : [
+            ...prev,
+            {
+              id: u.id,
+              slug: u.slug,
+              name: u.name,
+              emoji: u.emoji,
+              occupation: u.occupation ?? "",
+              interests: u.interests ?? [],
+            },
+          ]
+    );
+  });
+
+  useWsEvent<UserLeftEvent>(EV.USER_LEFT, (data) => {
+    setUsers((prev) => prev.filter((p) => p.id !== data.userId));
+  });
+
+  /* ──────────────────────────────────────────
+     Roster the viewer is allowed to see — blocked users are removed entirely,
+     so they vanish from the list, the interest tabs, and the online count
+     (WhatsApp-style: a blocked person disappears from your view). blockedIds is
+     persisted in sessionStorage, so they stay hidden across refreshes too.
+     ────────────────────────────────────────── */
+
+  const roster = useMemo(
+    () => users.filter((u) => !blockedIds.includes(u.id)),
+    [users, blockedIds]
+  );
+
+  const onlineCount = roster.length;
 
   /* ──────────────────────────────────────────
      Dynamic interests
@@ -80,26 +140,26 @@ export default function RoomPage() {
   const uniqueInterests = useMemo(() => {
     const seen = new Map<string, Interest>();
 
-    users.forEach((u) =>
+    roster.forEach((u) =>
       u.interests.forEach((i) => {
         if (!seen.has(i.label)) seen.set(i.label, i);
       })
     );
 
     return Array.from(seen.values());
-  }, [users]);
+  }, [roster]);
 
   /* ──────────────────────────────────────────
      Filter users by tab
      ────────────────────────────────────────── */
 
   const filteredUsers = useMemo(() => {
-    if (activeTab === "Semua") return users;
+    if (activeTab === "Semua") return roster;
 
-    return users.filter((u) =>
+    return roster.filter((u) =>
       u.interests.some((i) => i.label === activeTab)
     );
-  }, [activeTab, users]);
+  }, [activeTab, roster]);
 
   /* ──────────────────────────────────────────
      UI
@@ -168,7 +228,7 @@ export default function RoomPage() {
               name={user.name}
               emoji={user.emoji}
               interests={user.interests}
-              onChat={() => router.push(`/${location}/chat/${user.slug}`)}
+              onChat={() => router.push(`/${location}/chat/${user.id}`)}
               onTap={() => setSelectedUser(user)}
             />
           ))
@@ -186,6 +246,7 @@ export default function RoomPage() {
       <div className="room-public-sticky">
         <PublicRoomCard
           onJoin={() => router.push(`/${location}/room/public`)}
+          unreadCount={unreadPublic}
         />
       </div>
 
@@ -201,11 +262,12 @@ export default function RoomPage() {
           isOpen={true}
           name={selectedUser.name}
           emoji={selectedUser.emoji}
+          occupation={selectedUser.occupation}
           interests={selectedUser.interests}
           onClose={() => setSelectedUser(null)}
           onChat={() => {
             setSelectedUser(null);
-            router.push(`/${location}/chat/${selectedUser.slug}`);
+            router.push(`/${location}/chat/${selectedUser.id}`);
           }}
         />
       )}

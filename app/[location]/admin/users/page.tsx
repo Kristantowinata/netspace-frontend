@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import AdminLayout from "@/components/admin/AdminLayout";
 import SearchInput from "@/components/admin/SearchInput";
 import LivePill from "@/components/admin/LivePill";
@@ -9,30 +10,55 @@ import { getActiveUsers, forceLogoutUser } from "@/services/adminApi";
 import type { AdminUser } from "@/services/adminMockData";
 
 export default function UsersPage() {
+  const params = useParams();
+  const location = params.location as string;
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
   const [modalUser, setModalUser] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsersData = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    getActiveUsers()
-      .then((data) => {
-        setUsers(data);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Gagal memuat data pengguna aktif. Silakan periksa koneksi server Anda.");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  // silent=true is the background poll: it refreshes the roster in place without
+  // toggling `loading`, so the skeleton rows don't flash every few seconds. Only
+  // the first load (and the manual "Coba Lagi") show the loading state.
+  const fetchUsersData = useCallback(
+    (silent = false) => {
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
+      return getActiveUsers(location)
+        .then((data) => {
+          setUsers(data);
+          if (silent) setError(null);
+        })
+        .catch((err) => {
+          console.error(err);
+          // Don't wipe the table on a transient background failure; only show
+          // the error screen on a foreground load.
+          if (!silent) {
+            setError(
+              "Gagal memuat data pengguna aktif. Silakan periksa koneksi server Anda."
+            );
+          }
+        })
+        .finally(() => {
+          if (!silent) setLoading(false);
+        });
+    },
+    [location]
+  );
 
   useEffect(() => {
     fetchUsersData();
+  }, [fetchUsersData]);
+
+  // The roster reflects who holds a live socket, which changes as people join
+  // and leave — poll every 10s so the admin sees it update without a refresh.
+  useEffect(() => {
+    const id = setInterval(() => fetchUsersData(true), 10_000);
+    return () => clearInterval(id);
   }, [fetchUsersData]);
 
   const filtered = users.filter((u) =>
@@ -82,7 +108,7 @@ export default function UsersPage() {
               <button
                 type="button"
                 className="mt-2 inline-flex items-center justify-center px-4 py-2 rounded-lg font-[inherit] text-xs font-semibold cursor-pointer transition-all duration-200 outline-none bg-admin-primary/10 text-admin-accent border border-admin-primary/35 hover:bg-admin-primary/20 hover:border-admin-primary/50"
-                onClick={fetchUsersData}
+                onClick={() => fetchUsersData()}
               >
                 Coba Lagi
               </button>

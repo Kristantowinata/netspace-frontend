@@ -23,18 +23,18 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
   const [activeUsersCount, setActiveUsersCount] = useState<number | null>(null);
 
   useEffect(() => {
-    getActiveUsers().then((data) => {
+    getActiveUsers(location).then((data) => {
       setActiveUsersCount(data.length);
     }).catch(() => {});
 
     const interval = setInterval(() => {
-      getActiveUsers().then((data) => {
+      getActiveUsers(location).then((data) => {
         setActiveUsersCount(data.length);
       }).catch(() => {});
     }, 15000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [location]);
 
   const NAV_ITEMS = [
     {

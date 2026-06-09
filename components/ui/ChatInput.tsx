@@ -5,9 +5,11 @@ import React, { useState } from "react";
 interface ChatInputProps {
   onSend: (message: string) => void;
   placeholder?: string;
+  /** Fired on every keystroke while there is text — used to emit typing events. */
+  onTyping?: () => void;
 }
 
-export default function ChatInput({ onSend, placeholder = "Tulis pesan..." }: ChatInputProps) {
+export default function ChatInput({ onSend, placeholder = "Tulis pesan...", onTyping }: ChatInputProps) {
   const [value, setValue] = useState("");
 
   const handleSend = () => {
@@ -15,6 +17,11 @@ export default function ChatInput({ onSend, placeholder = "Tulis pesan..." }: Ch
     if (!trimmed) return;
     onSend(trimmed);
     setValue("");
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+    if (e.target.value.trim().length > 0) onTyping?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -34,7 +41,7 @@ export default function ChatInput({ onSend, placeholder = "Tulis pesan..." }: Ch
           className="chat-input__field"
           placeholder={placeholder}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
         <button

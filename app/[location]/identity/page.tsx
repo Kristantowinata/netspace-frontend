@@ -15,16 +15,18 @@ export default function IdentityPage() {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<string | null>(null);
+  const [occupation, setOccupation] = useState("");
 
   const isValid =
     name.trim().length > 0 &&
     age.trim().length > 0 &&
     Number(age) > 0 &&
-    gender !== null;
+    gender !== null &&
+    occupation.trim().length > 0;
 
   const handleSubmit = () => {
     if (!isValid) return;
-    setIdentity(name, age, gender!);
+    setIdentity(name, age, gender!, occupation.trim());
     router.push(`/${location}/interests`);
   };
 
@@ -97,6 +99,16 @@ export default function IdentityPage() {
           />
 
           <GenderSelector value={gender} onChange={setGender} />
+
+          <Input
+            id="occupation"
+            label="Pekerjaan saat ini"
+            placeholder="mis. Mahasiswa, Desainer, Barista..."
+            value={occupation}
+            onChange={(v) => setOccupation(v.slice(0, 40))}
+            maxLength={40}
+            helperText="Bantu orang lain mengenalmu lebih cepat"
+          />
         </div>
       </main>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
 import ChatHeader from "@/components/ui/ChatHeader";
@@ -9,10 +9,14 @@ import ChatInput from "@/components/ui/ChatInput";
 import TypingIndicator from "@/components/ui/TypingIndicator";
 import MembersDrawer from "@/components/ui/MembersDrawer";
 import { useAppStore } from "@/store/useAppStore";
-
-/* ──────────────────────────────────────────
-   Types
-   ────────────────────────────────────────── */
+import { wsClient, useWsEvent } from "@/lib/ws";
+import {
+  EV,
+  type NewPublicMessageEvent,
+  type PublicUserTypingEvent,
+  type UserJoinedEvent,
+  type UserLeftEvent,
+} from "@/lib/wsTypes";
 
 interface ChatMessage {
   id: string;
@@ -24,79 +28,207 @@ interface ChatMessage {
   isMine: boolean;
 }
 
-/* ──────────────────────────────────────────
-   Mock data — will be replaced by WebSocket
-   ────────────────────────────────────────── */
+interface Member {
+  id: string;
+  name: string;
+  emoji: string;
+}
 
-const KRISTANTO_MSG: ChatMessage = {
-  id: "2",
-  senderId: "2",
-  senderName: "Kristanto",
-  senderEmoji: "🧑‍💻",
-  message: "Lagi ngopi nih broo..",
-  timestamp: "09:33",
-  isMine: false,
-};
+interface UsersResponse {
+  users: { id: string; name: string; emoji: string }[];
+  onlineCount: number;
+}
 
-/* ──────────────────────────────────────────
-   Component
-   ────────────────────────────────────────── */
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 export default function PublicChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      senderId: "1",
-      senderName: "Ken O",
-      senderEmoji: "👩‍🎨",
-      message: "Halo semua.. lagi pada ngapain nih di cafe?",
-      timestamp: "09:32",
-      isMine: false,
-    },
-  ]);
-  const [showTyping, setShowTyping] = useState(true);
-  const [showMembers, setShowMembers] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const msgIdCounter = useRef(10);
+  const location = useAppStore((s) => s.location);
   const locationName = useAppStore((s) => s.locationName);
+  const sessionToken = useAppStore((s) => s.sessionToken);
+  const myId = useAppStore((s) => s.userId);
+  const myName = useAppStore((s) => s.name);
+  const blockedIds = useAppStore((s) => s.blockedIds);
+  const clearUnreadPublic = useAppStore((s) => s.clearUnreadPublic);
 
-  // Online count: mock users + self
-  const onlineCount = 4;
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [typingUsers, setTypingUsers] = useState<PublicUserTypingEvent[]>([]);
+  const [showMembers, setShowMembers] = useState(false);
 
-  // Typing simulation: Kristanto types for 3.5s then message appears
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const stopTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
+
+  // Seed the member list + online count from the REST snapshot, then add self.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowTyping(false);
-      setMessages((prev) => [...prev, KRISTANTO_MSG]);
-    }, 3500);
+    if (!location) return;
+    const fetchMembers = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/locations/${location}/users`, {
+          headers: sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : undefined,
+        });
+        if (!res.ok) return;
+        const data: UsersResponse = await res.json();
+        const others: Member[] = data.users.map((u) => ({
+          id: u.id,
+          name: u.name,
+          emoji: u.emoji,
+        }));
+        const self: Member = { id: myId || "me", name: myName || "You", emoji: "🧑" };
+        setMembers([self, ...others.filter((m) => m.id !== myId)]);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchMembers();
+  }, [location, sessionToken, myId, myName]);
 
-    return () => clearTimeout(timer);
-  }, []);
+  // Load the recent shared timeline so the room has context on open instead of
+  // starting blank. Blocked users' lines are filtered out client-side. Being
+  // here means these are read — clear the unread badge.
+  useEffect(() => {
+    if (!location) return;
+    clearUnreadPublic();
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/locations/${location}/public-messages`,
+          {
+            headers: sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : undefined,
+          }
+        );
+        if (!res.ok) return;
+        const data: { messages: (ChatMessage & { senderName: string })[] } =
+          await res.json();
+        const history = (data.messages ?? [])
+          .filter((m) => m.isMine || !blockedIds.includes(m.senderId))
+          .map((m) => ({
+            id: m.id,
+            senderId: m.senderId,
+            senderName: m.isMine ? "You" : m.senderName,
+            senderEmoji: m.senderEmoji,
+            message: m.message,
+            timestamp: m.timestamp,
+            isMine: m.isMine,
+          }));
+        // Merge under any live messages that may have already arrived, de-duped
+        // by id so a message can't appear twice.
+        setMessages((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          const merged = [...history.filter((h) => !seen.has(h.id)), ...prev];
+          return merged;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchHistory();
+    // Only re-seed when the location changes, not on every blockedIds tweak.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, sessionToken]);
 
-  // Auto-scroll to bottom on new messages
+  // ── Incoming events ──
+
+  useWsEvent<NewPublicMessageEvent>(EV.NEW_PUBLIC_MESSAGE, (data) => {
+    if (!data.isMine && blockedIds.includes(data.senderId)) return;
+    setMessages((prev) => {
+      // Ignore duplicates (e.g. a message already present from history).
+      if (prev.some((m) => m.id === data.id)) return prev;
+      return [
+        ...prev,
+        {
+          id: data.id,
+          senderId: data.senderId,
+          senderName: data.isMine ? "You" : data.senderName,
+          senderEmoji: data.senderEmoji,
+          message: data.message,
+          timestamp: data.timestamp,
+          isMine: data.isMine,
+        },
+      ];
+    });
+    // A message from someone means they stopped typing.
+    setTypingUsers((prev) => prev.filter((t) => t.userId !== data.senderId));
+  });
+
+  useWsEvent<PublicUserTypingEvent>(EV.PUBLIC_USER_TYPING, (data) => {
+    if (blockedIds.includes(data.userId)) return;
+    setTypingUsers((prev) => {
+      const without = prev.filter((t) => t.userId !== data.userId);
+      return [...without, data];
+    });
+    // Safety auto-clear in case a stop event is missed.
+    clearTimeout(typingTimers.current[data.userId]);
+    typingTimers.current[data.userId] = setTimeout(() => {
+      setTypingUsers((prev) => prev.filter((t) => t.userId !== data.userId));
+    }, 4000);
+  });
+
+  useWsEvent<PublicUserTypingEvent>(EV.PUBLIC_USER_STOPPED_TYPING, (data) => {
+    setTypingUsers((prev) => prev.filter((t) => t.userId !== data.userId));
+    clearTimeout(typingTimers.current[data.userId]);
+  });
+
+  useWsEvent<UserJoinedEvent>(EV.USER_JOINED, (data) => {
+    const u = data.user;
+    // Ignore self and blocked users — a blocked person shouldn't rejoin the
+    // member list just because they reconnected.
+    if (u.id === myId || blockedIds.includes(u.id)) return;
+    setMembers((prev) =>
+      prev.some((m) => m.id === u.id)
+        ? prev
+        : [...prev, { id: u.id, name: u.name, emoji: u.emoji }]
+    );
+  });
+
+  useWsEvent<UserLeftEvent>(EV.USER_LEFT, (data) => {
+    setMembers((prev) => prev.filter((m) => m.id !== data.userId));
+    setTypingUsers((prev) => prev.filter((t) => t.userId !== data.userId));
+  });
+
+  // Auto-scroll to bottom on new messages / typing.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, showTyping]);
+  }, [messages, typingUsers]);
 
-  // Handle user sending a message
-  // TODO: Replace with WebSocket emit when backend is ready
+  // ── Outgoing ──
+
   const handleSend = (text: string) => {
-    const now = new Date();
-    const timestamp = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const newId = String(msgIdCounter.current++);
-
-    const userMsg: ChatMessage = {
-      id: newId,
-      senderId: "me",
-      senderName: "You",
-      senderEmoji: "",
+    wsClient.send("send_public_message", {
+      locationSlug: location,
       message: text,
-      timestamp,
-      isMine: true,
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    });
+    // Stop typing once a message is sent.
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      wsClient.send("public_typing_stop", { locationSlug: location });
+    }
+    if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
   };
+
+  const handleTyping = useCallback(() => {
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      wsClient.send("public_typing_start", { locationSlug: location });
+    }
+    if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
+    stopTypingTimer.current = setTimeout(() => {
+      isTypingRef.current = false;
+      wsClient.send("public_typing_stop", { locationSlug: location });
+    }, 2000);
+  }, [location]);
+
+  // Hide blocked users from the member list + the online count. blockedIds is
+  // persisted, so the filter also holds after a refresh re-seeds from REST.
+  const visibleMembers = members.filter((m) => !blockedIds.includes(m.id));
+  const onlineCount = visibleMembers.length;
+  const typing = typingUsers[typingUsers.length - 1];
 
   return (
     <MobileLayout showGlow={false}>
@@ -122,6 +254,14 @@ export default function PublicChatPage() {
           </div>
         </div>
 
+        {messages.length === 0 && (
+          <div className="public-chat-empty">
+            <p className="public-chat-empty__text">
+              Belum ada pesan. Sapa yang lain duluan 👋
+            </p>
+          </div>
+        )}
+
         {/* Message bubbles */}
         {messages.map((msg) => (
           <ChatBubble
@@ -135,10 +275,10 @@ export default function PublicChatPage() {
         ))}
 
         {/* Typing indicator */}
-        {showTyping && (
+        {typing && (
           <TypingIndicator
-            senderName="Kristanto"
-            senderEmoji="🧑‍💻"
+            senderName={typing.name}
+            senderEmoji={typing.emoji}
           />
         )}
 
@@ -147,7 +287,7 @@ export default function PublicChatPage() {
       </div>
 
       {/* ── Input ── */}
-      <ChatInput onSend={handleSend} />
+      <ChatInput onSend={handleSend} onTyping={handleTyping} />
 
       {/* ── Bottom Nav ── */}
       <BottomNav />
@@ -159,12 +299,12 @@ export default function PublicChatPage() {
       <MembersDrawer
         isOpen={showMembers}
         locationName={locationName}
-        members={[
-          { id: "1", name: "Ken O", emoji: "👩‍🎨", isOnline: true },
-          { id: "2", name: "Kristanto", emoji: "🧑‍💻", isOnline: true },
-          { id: "3", name: "Steven", emoji: "👩‍🚀", isOnline: true },
-          { id: "me", name: "You", emoji: "🧑‍💻", isOnline: true },
-        ]}
+        members={visibleMembers.map((m) => ({
+          id: m.id,
+          name: m.id === myId ? `${m.name} (kamu)` : m.name,
+          emoji: m.emoji,
+          isOnline: true,
+        }))}
         onClose={() => setShowMembers(false)}
       />
 
@@ -233,6 +373,20 @@ export default function PublicChatPage() {
           font-size: 11px;
           color: rgba(255, 255, 255, 0.45);
           font-weight: 600;
+        }
+
+        .public-chat-empty {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+        }
+
+        .public-chat-empty__text {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.4);
+          text-align: center;
         }
 
         /* Spacer for bottom nav */

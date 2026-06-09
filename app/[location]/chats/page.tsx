@@ -1,61 +1,106 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
 import ChatPreviewCard from "@/components/ui/ChatPreviewCard";
 import { useAppStore } from "@/store/useAppStore";
+import { useWsEvent } from "@/lib/ws";
+import {
+  EV,
+  type MessageDTO,
+  type NewGroupMessageEvent,
+  type NewMessageEvent,
+  type GroupRenamedEvent,
+  type GroupDissolvedEvent,
+} from "@/lib/wsTypes";
 
-/* ──────────────────────────────────────────
-   Mock data — will be replaced by WebSocket
-   ────────────────────────────────────────── */
-
-interface ChatPreview {
-  id: string;
-  type: "dm" | "group";
-  name: string;
-  emoji: string;
-  avatarGradient: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-  subtitle?: string;
-}
-
-const MOCK_CHATS: ChatPreview[] = [
-  {
-    id: "ken-o",
-    type: "dm",
-    name: "Ken O",
-    emoji: "👩‍🎨",
-    avatarGradient: "linear-gradient(135deg, rgba(56, 100, 255, 0.5), rgba(100, 60, 255, 0.4))",
-    lastMessage: "Halo broo.. boleh kenalan?",
-    timestamp: "09:35",
-    unread: true,
-  },
-  {
-    id: "kopi-gang",
-    type: "group",
-    name: "Kopi Gacor",
-    emoji: "☕",
-    avatarGradient: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-    lastMessage: "Haha iya lagi, jadi penasaran nih",
-    timestamp: "09:42",
-    unread: false,
-    subtitle: "Group Session · 3 anggota",
-  },
-];
-
-/* ──────────────────────────────────────────
-   Component
-   ────────────────────────────────────────── */
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 export default function ChatsPage() {
   const router = useRouter();
-  const { location, locationName } = useAppStore();
+  const location = useAppStore((s) => s.location);
+  const locationName = useAppStore((s) => s.locationName);
+  const sessionToken = useAppStore((s) => s.sessionToken);
+  const blockedIds = useAppStore((s) => s.blockedIds);
 
-  const handleChatClick = (chat: ChatPreview) => {
+  const [chats, setChats] = useState<MessageDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Blocked users disappear from the chat list: drop their DM thread. (Group
+  // chats stay — a block is person-to-person, not group-wide.) blockedIds is
+  // persisted, so the thread stays gone after a refresh too.
+  const visibleChats = chats.filter(
+    (c) => !(c.type === "dm" && blockedIds.includes(c.id))
+  );
+
+  // Pull the persisted chat list (DMs + groups the user has talked in).
+  useEffect(() => {
+    if (!sessionToken) {
+      setLoading(false);
+      return;
+    }
+    const fetchChats = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/chats`, {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) return;
+        const data: { chats: MessageDTO[] } = await res.json();
+        setChats(data.chats ?? []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChats();
+  }, [sessionToken]);
+
+  // Bump the matching conversation's preview when a fresh message arrives.
+  useWsEvent<NewMessageEvent>(EV.NEW_MESSAGE, (data) => {
+    if (data.isMine) return;
+    setChats((prev) =>
+      prev.map((c) =>
+        c.type === "dm" && c.id === data.senderId
+          ? { ...c, lastMessage: data.message, timestamp: data.timestamp, unread: true }
+          : c
+      )
+    );
+  });
+
+  useWsEvent<NewGroupMessageEvent>(EV.NEW_GROUP_MESSAGE, (data) => {
+    if (data.isMine) return;
+    setChats((prev) =>
+      prev.map((c) =>
+        c.type === "group" && c.id === data.groupId
+          ? { ...c, lastMessage: data.message, timestamp: data.timestamp, unread: true }
+          : c
+      )
+    );
+  });
+
+  // Live: a group was renamed → update its name in the list.
+  useWsEvent<GroupRenamedEvent>(EV.GROUP_RENAMED, (data) => {
+    setChats((prev) =>
+      prev.map((c) =>
+        c.type === "group" && c.id === data.groupId
+          ? { ...c, name: data.name }
+          : c
+      )
+    );
+  });
+
+  // Live: a group dissolved → remove it from the list.
+  useWsEvent<GroupDissolvedEvent>(EV.GROUP_DISSOLVED, (data) => {
+    setChats((prev) =>
+      prev.filter((c) => !(c.type === "group" && c.id === data.groupId))
+    );
+  });
+
+  const handleChatClick = (chat: MessageDTO) => {
     if (chat.type === "dm") {
       router.push(`/${location}/chat/${chat.id}`);
     } else {
@@ -83,10 +128,14 @@ export default function ChatsPage() {
 
       {/* ── Chat list ── */}
       <div className="chats-list hide-scrollbar">
-        {MOCK_CHATS.length > 0 ? (
-          MOCK_CHATS.map((chat) => (
+        {loading ? (
+          <div className="chats-empty">
+            <p className="chats-empty__text">Memuat...</p>
+          </div>
+        ) : visibleChats.length > 0 ? (
+          visibleChats.map((chat) => (
             <ChatPreviewCard
-              key={chat.id}
+              key={`${chat.type}-${chat.id}`}
               emoji={chat.emoji}
               avatarGradient={chat.avatarGradient}
               name={chat.name}

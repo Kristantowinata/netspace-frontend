@@ -24,6 +24,9 @@ const INTERESTS = [
   { id: 12, emoji: "🌱", label: "Tanaman", isCustom: false },
 ];
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+
 function formatNameToSlug(name: string): string {
   return name
     .toLowerCase()             
@@ -35,10 +38,13 @@ function formatNameToSlug(name: string): string {
 
 export default function InterestsPage() {
   const router = useRouter();
-  const { location, name, age, gender, setInterests } = useAppStore();
+  const { location, name, age, gender, occupation, setInterests, setSession } =
+    useAppStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCustom, setShowCustom] = useState(false);
   const [customInterest, setCustomInterest] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggle = (label: string) => {
     setSelected((prev) => {
@@ -57,7 +63,7 @@ export default function InterestsPage() {
   const isValid = totalSelected >= 1;
 
 const handleSubmit = async () => {
-  if (!isValid) return;
+  if (!isValid || submitting) return;
 
   const selectedInterests = INTERESTS.filter((i) =>
     selected.has(i.label)
@@ -72,6 +78,9 @@ const handleSubmit = async () => {
     });
   }
 
+  setSubmitting(true);
+  setError(null);
+
   try {
     const payload = {
       locationSlug: location,
@@ -79,13 +88,12 @@ const handleSubmit = async () => {
       slug: formatNameToSlug(name),
       age: Number(age),
       gender: gender,
+      occupation: occupation,
       interests: selectedInterests,
     };
 
-    console.log("payload: ", payload);
-
     const response = await fetch(
-      "http://localhost:8080/api/sessions/check-in",
+      `${API_BASE}/api/sessions/check-in`,
       {
         method: "POST",
         headers: {
@@ -101,24 +109,22 @@ const handleSubmit = async () => {
 
     const data = await response.json();
 
-    console.log(data);
-
-    // Store session token in cookie
-    await fetch("/api/auth/session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sessionToken: data.sessionToken,
-      }),
-    });
-
+    // Persist the JWT + our own identity so authenticated requests can send
+    // the Bearer token and the WebSocket layer can identify us.
+    setSession(data.sessionToken, data.userId, payload.slug);
     setInterests(selectedInterests);
 
     router.push(`/${location}/room`);
   } catch (err) {
+    // Surface the failure instead of swallowing it: previously the button just
+    // went dead (most often because the backend was briefly unreachable),
+    // leaving the user stuck on this step with no idea why. Now they see a
+    // message and can retry once the server is back.
     console.error(err);
+    setError(
+      "Gagal terhubung ke server. Periksa koneksi kamu lalu coba lagi."
+    );
+    setSubmitting(false);
   }
 };
 
@@ -194,13 +200,18 @@ const handleSubmit = async () => {
 
       {/* ── CTA ── */}
       <div className="interests-cta">
-        {totalSelected > 0 && (
+        {error && <p className="interests-cta__error">{error}</p>}
+        {totalSelected > 0 && !error && (
           <p className="interests-cta__count">
             {totalSelected} dipilih
           </p>
         )}
-        <Button onClick={handleSubmit} disabled={!isValid} fullWidth>
-          Masuk ke Ruangan →
+        <Button
+          onClick={handleSubmit}
+          disabled={!isValid || submitting}
+          fullWidth
+        >
+          {submitting ? "Memproses..." : "Masuk ke Ruangan →"}
         </Button>
       </div>
 
@@ -322,6 +333,15 @@ const handleSubmit = async () => {
           text-align: center;
           margin-bottom: 10px;
           font-weight: 600;
+        }
+
+        .interests-cta__error {
+          font-size: 12px;
+          color: #fca5a5;
+          text-align: center;
+          margin-bottom: 10px;
+          font-weight: 600;
+          line-height: 1.5;
         }
       `}</style>
     </MobileLayout>

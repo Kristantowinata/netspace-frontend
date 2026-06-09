@@ -9,7 +9,11 @@ interface ChatBubbleProps {
   senderName?: string;
   senderEmoji?: string;
   showAvatar?: boolean;
-  readReceipt?: boolean;
+  // Read receipt for my own DM bubbles (WhatsApp-style):
+  //   undefined → no receipt (public/group chat, or the other person's bubble)
+  //   false     → grey ✓✓ (delivered, not yet read)
+  //   true      → blue ✓✓ (the recipient opened the chat and read it)
+  read?: boolean;
 }
 
 export default function ChatBubble({
@@ -19,7 +23,7 @@ export default function ChatBubble({
   senderName,
   senderEmoji,
   showAvatar = true,
-  readReceipt,
+  read,
 }: ChatBubbleProps) {
   const isMine = variant === "mine";
 
@@ -45,8 +49,14 @@ export default function ChatBubble({
         {/* Timestamp + read receipt */}
         <span className="chat-bubble__time">
           {timestamp}
-          {isMine && readReceipt && (
-            <span className="chat-bubble__read">✓✓</span>
+          {isMine && read !== undefined && (
+            <span
+              className={`chat-bubble__read ${
+                read ? "chat-bubble__read--seen" : ""
+              }`}
+            >
+              ✓✓
+            </span>
           )}
         </span>
       </div>
@@ -146,9 +156,16 @@ export default function ChatBubble({
           gap: 4px;
         }
 
+        /* Grey by default = delivered but not yet read. */
         .chat-bubble__read {
-          color: rgba(56, 180, 255, 0.7);
+          color: rgba(255, 255, 255, 0.45);
           font-size: 10px;
+          transition: color 0.2s ease;
+        }
+
+        /* Blue = read, just like WhatsApp's blue double-check. */
+        .chat-bubble__read--seen {
+          color: #34b7f1;
         }
       `}</style>
     </div>

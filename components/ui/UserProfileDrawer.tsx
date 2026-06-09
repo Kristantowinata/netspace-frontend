@@ -12,6 +12,7 @@ interface UserProfileDrawerProps {
   isOpen: boolean;
   name: string;
   emoji: string;
+  occupation?: string;
   interests: Interest[];
   isOnline?: boolean;
   onClose: () => void;
@@ -22,6 +23,7 @@ export default function UserProfileDrawer({
   isOpen,
   name,
   emoji,
+  occupation,
   interests,
   isOnline = true,
   onClose,
@@ -47,6 +49,9 @@ export default function UserProfileDrawer({
 
         {/* Name */}
         <h2 className="upd-name">{name}</h2>
+        {occupation && occupation.trim().length > 0 && (
+          <p className="upd-occupation">💼 {occupation}</p>
+        )}
         <div className="upd-status">
           <span className="upd-status__dot" />
           <span className="upd-status__text">
@@ -151,6 +156,13 @@ export default function UserProfileDrawer({
           font-weight: 800;
           color: white;
           margin-top: 4px;
+        }
+
+        .upd-occupation {
+          font-size: 13px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.7);
+          margin-top: -2px;
         }
 
         .upd-status {

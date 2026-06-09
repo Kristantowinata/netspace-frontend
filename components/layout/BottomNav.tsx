@@ -33,6 +33,7 @@ interface NavTab {
 export default function BottomNav({ chatUnread = false }: BottomNavProps) {
   const pathname = usePathname();
   const location = useAppStore((s) => s.location);
+  const hasUnreadNotif = useAppStore((s) => s.hasUnreadNotif);
 
   const TABS: NavTab[] = [
     {
@@ -97,6 +98,12 @@ export default function BottomNav({ chatUnread = false }: BottomNavProps) {
               {/* Unread dot — only on chat tab */}
               {tab.key === "chat" && chatUnread && (
                 <span className="bottom-nav__unread-dot" aria-label="Unread messages" />
+              )}
+
+              {/* Unread dot — profile tab, for pending notifications.
+                  Hidden while Profile is the active tab (you're looking at them). */}
+              {tab.key === "profile" && hasUnreadNotif && !active && (
+                <span className="bottom-nav__unread-dot" aria-label="Notifikasi baru" />
               )}
             </span>
 
