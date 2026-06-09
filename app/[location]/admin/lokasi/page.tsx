@@ -111,7 +111,7 @@ export default function LokasiPage() {
             <QRCodeCard
               url={qrUrl}
               token={data.qrToken}
-              label={data.qrLabel}
+              label={location}
               fileName={location}
             />
           </div>
