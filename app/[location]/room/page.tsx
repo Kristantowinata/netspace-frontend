@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import MobileLayout from "@/components/layout/MobileLayout";
 import BottomNav from "@/components/layout/BottomNav";
@@ -8,7 +8,7 @@ import UserCard from "@/components/ui/UserCard";
 import PublicRoomCard from "@/components/ui/PublicRoomCard";
 import UserProfileDrawer from "@/components/ui/UserProfileDrawer";
 import { useAppStore } from "@/store/useAppStore";
-import { useWsEvent } from "@/lib/ws";
+import { useWsEvent, useWsStatus } from "@/lib/ws";
 import { EV, type UserJoinedEvent, type UserLeftEvent } from "@/lib/wsTypes";
 
 interface Interest {
@@ -56,11 +56,12 @@ export default function RoomPage() {
 
   const [users, setUsers] = useState<MockUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const wsConnected = useWsStatus();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
+  const fetchUsers = useCallback(
+    async (showLoading = false) => {
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
 
         const res = await fetch(
           `${API_BASE}/api/locations/${location}/users`,
@@ -81,12 +82,27 @@ export default function RoomPage() {
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (showLoading) setLoading(false);
       }
-    };
+    },
+    [location, sessionToken]
+  );
 
-    fetchUsers();
-  }, [location, sessionToken]);
+  useEffect(() => {
+    fetchUsers(true);
+
+    // WebSocket presence is immediate, while this periodic snapshot recovers
+    // from missed join/leave events and works across multiple backend replicas.
+    const interval = window.setInterval(() => fetchUsers(), 5000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    if (wsConnected) fetchUsers();
+  }, [wsConnected, fetchUsers]);
 
   /* ──────────────────────────────────────────
      Live roster — people checking in / leaving update the list and the
