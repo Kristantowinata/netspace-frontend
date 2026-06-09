@@ -191,3 +191,6 @@ The QR is static and points straight at your domain — print it once and reuse 
 ## 📄 License
 
 For educational / portfolio use.
+
+---
+note : admin pass = admin123
