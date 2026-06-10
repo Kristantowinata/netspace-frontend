@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminStore } from "@/store/useAdminStore";
 import { getActiveUsers } from "@/services/adminApi";
+import { adminWsClient } from "@/lib/ws";
 
 interface AdminSidebarProps {
   location: string;
@@ -71,9 +72,20 @@ export default function AdminSidebar({ location, locationName, locationAvatar }:
         </svg>
       )
     },
+    {
+      href: `/${location}/admin/public-chat`,
+      label: "Public Chat",
+      icon: (
+        <svg className="w-[18px] h-[18px] transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+          <path d="M8 9h8M8 13h5" />
+        </svg>
+      )
+    },
   ];
 
   const handleLogout = () => {
+    adminWsClient.disconnect();
     logout();
     router.push(`/${location}/admin/login`);
   };

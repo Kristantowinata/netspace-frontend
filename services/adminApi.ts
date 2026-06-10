@@ -43,6 +43,17 @@ async function apiGet<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+export interface AdminPublicMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderEmoji: string;
+  message: string;
+  timestamp: string;
+  isMine: boolean;
+  isAdmin: boolean;
+}
+
 // ── Auth ──
 
 export async function loginAdmin(
@@ -129,4 +140,29 @@ export async function forceLogoutUser(
     throw new Error(`Force logout failed with status ${res.status}`);
   }
   return (await res.json()) as { success: boolean };
+}
+
+export async function getAdminPublicMessages(
+  slug: string
+): Promise<AdminPublicMessage[]> {
+  const data = await apiGet<{ messages: AdminPublicMessage[] }>(
+    `/api/admin/locations/${slug}/public-messages`
+  );
+  return data.messages ?? [];
+}
+
+export async function deleteAllPublicMessages(
+  slug: string
+): Promise<{ success: boolean; deletedCount: number }> {
+  const res = await fetch(
+    `${BASE_URL}/api/admin/locations/${slug}/public-messages`,
+    {
+      method: "DELETE",
+      headers: authHeaders(),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(`Delete public messages failed with status ${res.status}`);
+  }
+  return (await res.json()) as { success: boolean; deletedCount: number };
 }

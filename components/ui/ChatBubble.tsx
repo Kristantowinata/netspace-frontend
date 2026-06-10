@@ -14,6 +14,7 @@ interface ChatBubbleProps {
   //   false     → grey ✓✓ (delivered, not yet read)
   //   true      → blue ✓✓ (the recipient opened the chat and read it)
   read?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function ChatBubble({
@@ -24,6 +25,7 @@ export default function ChatBubble({
   senderEmoji,
   showAvatar = true,
   read,
+  isAdmin = false,
 }: ChatBubbleProps) {
   const isMine = variant === "mine";
 
@@ -39,6 +41,7 @@ export default function ChatBubble({
         {/* Sender name */}
         <span className="chat-bubble__name">
           {isMine ? "You" : senderName}
+          {isAdmin && <span className="chat-bubble__admin">Admin</span>}
         </span>
 
         {/* Bubble */}
@@ -105,6 +108,20 @@ export default function ChatBubble({
           color: rgba(255, 255, 255, 0.4);
           font-weight: 600;
           padding-left: 4px;
+        }
+
+        .chat-bubble__admin {
+          display: inline-flex;
+          margin-left: 5px;
+          padding: 1px 5px;
+          border-radius: 999px;
+          background: rgba(122, 168, 255, 0.16);
+          border: 1px solid rgba(122, 168, 255, 0.3);
+          color: #9fc0ff;
+          font-size: 8px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .chat-bubble--mine .chat-bubble__name {

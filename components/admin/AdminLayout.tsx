@@ -16,15 +16,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const params = useParams();
   const location = params.location as string;
   const isAuthenticated = useAdminStore((s) => s.isAuthenticated);
+  const adminLocation = useAdminStore((s) => s.locationSlug);
+  const logout = useAdminStore((s) => s.logout);
   const locInfo = getLocationInfo(location);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !adminLocation) {
+      if (isAuthenticated && !adminLocation) logout();
       router.replace(`/${location}/admin/login`);
+    } else if (adminLocation !== location) {
+      router.replace(`/${adminLocation}/admin/analytics`);
     }
-  }, [isAuthenticated, router, location]);
+  }, [isAuthenticated, adminLocation, logout, router, location]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !adminLocation || adminLocation !== location) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-6 h-6 rounded-full border-[3px] border-admin-primary/30 border-t-admin-primary animate-admin-spin" />

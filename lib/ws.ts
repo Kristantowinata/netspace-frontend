@@ -24,7 +24,7 @@ type Handler<T = unknown> = (data: T) => void;
 export const WS_OPEN = "__open";
 export const WS_CLOSE = "__close";
 
-class WsClient {
+export class WsClient {
   private socket: WebSocket | null = null;
   private token = "";
   private locationSlug = "";
@@ -180,6 +180,7 @@ class WsClient {
 }
 
 export const wsClient = new WsClient();
+export const adminWsClient = new WsClient();
 
 // ── React hooks ──
 
@@ -189,7 +190,10 @@ export function useWsEvent<T = unknown>(
   handler: (data: T) => void
 ): void {
   const ref = useRef(handler);
-  ref.current = handler;
+
+  useEffect(() => {
+    ref.current = handler;
+  }, [handler]);
 
   useEffect(() => {
     const off = wsClient.on<T>(event, (d) => ref.current(d));
@@ -205,7 +209,37 @@ export function useWsStatus(): boolean {
   useEffect(() => {
     const offOpen = wsClient.on(WS_OPEN, () => setConnected(true));
     const offClose = wsClient.on(WS_CLOSE, () => setConnected(false));
-    setConnected(wsClient.isConnected());
+    return () => {
+      offOpen();
+      offClose();
+    };
+  }, []);
+  return connected;
+}
+
+export function useAdminWsEvent<T = unknown>(
+  event: string,
+  handler: (data: T) => void
+): void {
+  const ref = useRef(handler);
+
+  useEffect(() => {
+    ref.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    const off = adminWsClient.on<T>(event, (d) => ref.current(d));
+    return off;
+  }, [event]);
+}
+
+export function useAdminWsStatus(): boolean {
+  const [connected, setConnected] = useState<boolean>(() =>
+    adminWsClient.isConnected()
+  );
+  useEffect(() => {
+    const offOpen = adminWsClient.on(WS_OPEN, () => setConnected(true));
+    const offClose = adminWsClient.on(WS_CLOSE, () => setConnected(false));
     return () => {
       offOpen();
       offClose();

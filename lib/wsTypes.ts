@@ -83,6 +83,12 @@ export interface NewPublicMessageEvent {
   message: string;
   timestamp: string;
   isMine: boolean;
+  isAdmin: boolean;
+}
+
+export interface PublicMessagesClearedEvent {
+  locationSlug: string;
+  deletedCount: number;
 }
 
 export interface PublicUserTypingEvent {
@@ -144,6 +150,7 @@ export const EV = {
   NEW_PUBLIC_MESSAGE: "new_public_message",
   PUBLIC_USER_TYPING: "public_user_typing",
   PUBLIC_USER_STOPPED_TYPING: "public_user_stopped_typing",
+  PUBLIC_MESSAGES_CLEARED: "public_messages_cleared",
   NEW_GROUP_MESSAGE: "new_group_message",
   NEW_NOTIFICATION: "new_notification",
   GROUP_CREATED: "group_created",

@@ -35,8 +35,15 @@ export default function AdminLoginPage() {
     const result = await loginAdmin(username, password);
 
     if (result.success && result.admin && result.token) {
-      login(result.admin.name, result.admin.role, result.admin.plan, result.admin.avatar, result.token);
-      router.push(`/${location}/admin/analytics`);
+      login(
+        result.admin.name,
+        result.admin.role,
+        result.admin.plan,
+        result.admin.avatar,
+        result.admin.locationSlug,
+        result.token
+      );
+      router.push(`/${result.admin.locationSlug}/admin/analytics`);
     } else {
       setError(result.error || "Login gagal");
     }

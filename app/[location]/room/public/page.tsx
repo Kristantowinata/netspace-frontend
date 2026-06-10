@@ -16,6 +16,7 @@ import {
   type PublicUserTypingEvent,
   type UserJoinedEvent,
   type UserLeftEvent,
+  type PublicMessagesClearedEvent,
 } from "@/lib/wsTypes";
 
 interface ChatMessage {
@@ -26,6 +27,7 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   isMine: boolean;
+  isAdmin: boolean;
 }
 
 interface Member {
@@ -116,6 +118,7 @@ export default function PublicChatPage() {
             message: m.message,
             timestamp: m.timestamp,
             isMine: m.isMine,
+            isAdmin: m.isAdmin,
           }));
         // Merge under any live messages that may have already arrived, de-duped
         // by id so a message can't appear twice.
@@ -150,6 +153,7 @@ export default function PublicChatPage() {
           message: data.message,
           timestamp: data.timestamp,
           isMine: data.isMine,
+          isAdmin: data.isAdmin,
         },
       ];
     });
@@ -173,6 +177,12 @@ export default function PublicChatPage() {
   useWsEvent<PublicUserTypingEvent>(EV.PUBLIC_USER_STOPPED_TYPING, (data) => {
     setTypingUsers((prev) => prev.filter((t) => t.userId !== data.userId));
     clearTimeout(typingTimers.current[data.userId]);
+  });
+
+  useWsEvent<PublicMessagesClearedEvent>(EV.PUBLIC_MESSAGES_CLEARED, (data) => {
+    if (data.locationSlug !== location) return;
+    setMessages([]);
+    setTypingUsers([]);
   });
 
   useWsEvent<UserJoinedEvent>(EV.USER_JOINED, (data) => {
@@ -271,6 +281,7 @@ export default function PublicChatPage() {
             variant={msg.isMine ? "mine" : "other"}
             senderName={msg.senderName}
             senderEmoji={msg.senderEmoji}
+            isAdmin={msg.isAdmin}
           />
         ))}
 

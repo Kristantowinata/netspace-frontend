@@ -80,6 +80,7 @@ export interface AdminProfile {
   role: string;
   plan: string;
   avatar: string;
+  locationSlug: string;
 }
 
 // ── Admin Profile ──
@@ -88,6 +89,7 @@ export const MOCK_ADMIN: AdminProfile = {
   role: "Partner",
   plan: "Pro Plan",
   avatar: "☕",
+  locationSlug: "kopiloka",
 };
 
 // ── Metrics ──
