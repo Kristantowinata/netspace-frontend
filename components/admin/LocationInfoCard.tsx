@@ -12,6 +12,9 @@ interface LocationInfoCardProps {
   timezone: string;
   isActive: boolean;
   onToggleActive: (active: boolean) => void;
+  // When true, the check-in toggle is locked (demo) so a visitor can't disable
+  // the venue and break the demo for everyone.
+  locked?: boolean;
 }
 
 export default function LocationInfoCard({
@@ -23,6 +26,7 @@ export default function LocationInfoCard({
   timezone,
   isActive,
   onToggleActive,
+  locked = false,
 }: LocationInfoCardProps) {
   const infoItems = [
     { label: "Partner ID", value: partnerId },
@@ -60,12 +64,18 @@ export default function LocationInfoCard({
         >
           {isActive ? "Aktif" : "Nonaktif"}
         </span>
-        <ToggleSwitch
-          checked={isActive}
-          onChange={onToggleActive}
-          activeLabel="Lokasi aktif untuk check-in"
-          inactiveLabel="Lokasi tidak menerima check-in"
-        />
+        {locked ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-admin-text-muted">
+            🔒 Dikunci di mode demo
+          </span>
+        ) : (
+          <ToggleSwitch
+            checked={isActive}
+            onChange={onToggleActive}
+            activeLabel="Lokasi aktif untuk check-in"
+            inactiveLabel="Lokasi tidak menerima check-in"
+          />
+        )}
       </div>
     </div>
   );

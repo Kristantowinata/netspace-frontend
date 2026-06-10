@@ -8,6 +8,7 @@ import QRCodeCard from "@/components/admin/QRCodeCard";
 import { getLocationInfo } from "@/services/adminMockData";
 import type { LocationData } from "@/services/adminMockData";
 import { getLocationDetail, toggleLocationStatus } from "@/services/adminApi";
+import { DEMO_MODE } from "@/lib/demo";
 
 export default function LokasiPage() {
   const params = useParams();
@@ -54,6 +55,7 @@ export default function LokasiPage() {
   }, [fetchDetail]);
 
   const handleToggle = async (active: boolean) => {
+    if (DEMO_MODE) return; // locked in demo — don't let anyone disable check-in
     const prev = isActive;
     setIsActive(active); // optimistic update
     try {
@@ -107,6 +109,7 @@ export default function LokasiPage() {
               timezone={data.timezone}
               isActive={isActive}
               onToggleActive={handleToggle}
+              locked={DEMO_MODE}
             />
             <QRCodeCard
               url={qrUrl}

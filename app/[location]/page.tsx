@@ -10,6 +10,7 @@ import {
   isInsideGeofence,
   resolveGeofenceTarget,
 } from "@/lib/geofence";
+import { DEMO_MODE } from "@/lib/demo";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
@@ -68,6 +69,23 @@ export default function JoinPage() {
       setState("inside");
       router.push(`/${locationSlug}/identity`);
     };
+
+    // DEMO MODE: the geofence self-anchors on the visitor, so everyone gets in
+    // anywhere. We still ask for location (so the GPS UX is visible), but always
+    // proceed — fail-open on denial/error. The "walk away → logout" still works
+    // via the continuous geofence hook.
+    if (DEMO_MODE) {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          () => proceed(),
+          () => proceed(),
+          { enableHighAccuracy: true, timeout: 8_000, maximumAge: 0 }
+        );
+      } else {
+        proceed();
+      }
+      return;
+    }
 
     // Center + radius from the manual override (lib/geofence.ts) or the venue's
     // DB coordinates. null → this venue has no geofence, so let them in.

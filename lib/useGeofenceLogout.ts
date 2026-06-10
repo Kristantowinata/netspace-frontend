@@ -26,6 +26,7 @@ import {
   type GeofenceTarget,
   type GeofenceExitReason,
 } from "@/lib/geofence";
+import { DEMO_MODE, DEMO_GEOFENCE_RADIUS_M } from "@/lib/demo";
 
 // Re-export so existing imports (e.g. the layout) keep working.
 export type { GeofenceTarget, GeofenceExitReason };
@@ -59,25 +60,30 @@ export function useGeofenceLogout(
     let gotFix = false;
     let watchId: number | null = null;
     let noFixTimer: ReturnType<typeof setTimeout> | null = null;
+    const requiredStreak = DEMO_MODE ? 2 : OUTSIDE_STREAK;
 
-    // The geofence is measured from the venue's fixed coordinates + radius (the
-    // café spot), in both modes.
-    const { lat: centerLat, lng: centerLng, radius } = target;
+    // Where the geofence is measured from:
+    //   • demo  → the visitor's OWN first GPS fix (self-anchor) + generous radius,
+    //   • else  → the venue's fixed coordinates + radius.
+    let centerLat: number | null = DEMO_MODE ? null : target.lat;
+    let centerLng: number | null = DEMO_MODE ? null : target.lng;
+    const radius = DEMO_MODE ? DEMO_GEOFENCE_RADIUS_M : target.radius;
 
-    // Test mode is fail-CLOSED: any inability to confirm the user is inside the
-    // radius (permission denied, location off, no signal, prompt ignored) ends
-    // the session. Production fails OPEN, so this only runs in test mode.
+    // Only test mode is fail-CLOSED (any inability to confirm location ends the
+    // session). Demo and production fail OPEN — a GPS glitch never kicks anyone.
+    const strict = GEOFENCE_TEST_MODE && !DEMO_MODE;
+
     const failClosed = (why: string) => {
       if (fired) return;
       fired = true;
       if (watchId !== null) navigator.geolocation.clearWatch(watchId);
       if (noFixTimer !== null) clearTimeout(noFixTimer);
-      console.info(`[geofence] ${why} → ending session (test fail-closed)`);
+      console.info(`[geofence] ${why} → ending session (fail-closed)`);
       onExitRef.current("no-location");
     };
 
     if (!("geolocation" in navigator)) {
-      if (GEOFENCE_TEST_MODE) failClosed("geolocation not supported");
+      if (strict) failClosed("geolocation not supported");
       return;
     }
 
@@ -90,25 +96,29 @@ export function useGeofenceLogout(
       }
       const { latitude, longitude, accuracy } = pos.coords;
 
-      const dist = distanceMeters(latitude, longitude, centerLat, centerLng);
-
-      // Outside = not inside. Shared with the entry gate so both agree on the
-      // boundary (test mode = raw distance; production = accuracy-aware).
-      const confidentlyOutside = !isInsideGeofence(dist, accuracy, radius);
-
-      if (GEOFENCE_TEST_MODE) {
-        console.info(
-          `[geofence] dist ${Math.round(dist)} m / radius ${radius} m · accuracy ±${Math.round(
-            accuracy
-          )} m · ${confidentlyOutside ? "OUTSIDE" : "inside"} (streak ${
-            confidentlyOutside ? outsideStreak + 1 : 0
-          }/${OUTSIDE_STREAK})`
-        );
+      // Demo self-anchor: the first fix becomes the center we measure from.
+      if (centerLat === null || centerLng === null) {
+        centerLat = latitude;
+        centerLng = longitude;
+        return;
       }
+
+      const dist = distanceMeters(latitude, longitude, centerLat, centerLng);
+      // Demo uses raw distance vs a generous radius; test/prod use the shared
+      // accuracy-aware rule.
+      const confidentlyOutside = DEMO_MODE
+        ? dist > radius
+        : !isInsideGeofence(dist, accuracy, radius);
+
+      console.info(
+        `[geofence] dist ${Math.round(dist)} m / radius ${radius} m → ${
+          confidentlyOutside ? "OUTSIDE" : "inside"
+        }`
+      );
 
       if (confidentlyOutside) {
         outsideStreak += 1;
-        if (outsideStreak >= OUTSIDE_STREAK) {
+        if (outsideStreak >= requiredStreak) {
           fired = true;
           if (watchId !== null) navigator.geolocation.clearWatch(watchId);
           onExitRef.current("outside");
@@ -119,13 +129,11 @@ export function useGeofenceLogout(
     };
 
     const onError = (err: GeolocationPositionError) => {
-      // Test mode: ANY location error (denied, unavailable, timeout) means we
-      // can't confirm the user is in range → fail closed. Production fails open
-      // so a GPS glitch never kicks a real visitor.
-      if (GEOFENCE_TEST_MODE) {
+      if (strict) {
         failClosed(`location error: ${err.message}`);
         return;
       }
+      // Demo / production fail OPEN.
       console.warn("[geofence] location unavailable, not enforcing:", err.message);
       outsideStreak = 0;
     };
@@ -136,10 +144,8 @@ export function useGeofenceLogout(
       timeout: 27_000,
     });
 
-    // Backstop for the case watchPosition never calls back at all — most often a
-    // permission prompt left unanswered, or location services disabled with no
-    // error surfaced. If no fix arrives in time, fail closed.
-    if (GEOFENCE_TEST_MODE) {
+    // Backstop (test mode only): if no fix ever arrives, fail closed.
+    if (strict) {
       noFixTimer = setTimeout(() => {
         if (!gotFix) failClosed("no location fix in time (permission not granted?)");
       }, NO_FIX_TIMEOUT_MS);

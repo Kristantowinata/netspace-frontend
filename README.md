@@ -20,6 +20,40 @@ This repository is the **web client** (Next.js). It talks to the [NetSpace backe
 
 ---
 
+## 🧪 Trying it out (demo)
+
+> 🧪 **This deployment runs in DEMO mode** (`lib/demo.ts`). The app normally **gates entry on GPS** — you must be physically inside the café's geofence — but in demo mode the gate **self‑anchors on *your* position**, so anyone can get in from anywhere while the GPS "you must be at the venue" UX stays visible. Walk ~150 m away and you'll still be logged out — that's the location feature in action. For a real café, set `DEMO_MODE = false`.
+
+### Admin panel
+Open `/<slug>/admin/login` and sign in with the demo credentials:
+
+| Café | URL | Username | Password |
+|---|---|---|---|
+| Kopiloka | `/kopiloka/admin/login` | `kopiloka` | `admin123` |
+| Koktong | `/koktong/admin/login` | `koktong` | `admin123` |
+| Kopi Braga | `/kopi-braga/admin/login` | `kopibraga` | `admin123` |
+
+> 🔓 **Demo credentials only — change them in production.** With these you can view analytics, manage active users, and download the venue QR.
+
+### Letting yourself in from anywhere (testing the location gate)
+When running locally, open **`lib/geofence.ts`** and point the override at your own spot — or use a giant radius so you're always "inside":
+
+```ts
+// Option 1 — center on your coordinates
+export const GEOFENCE_OVERRIDE = { lat: <your-lat>, lng: <your-lng>, radius: 100 };
+
+// Option 2 — effectively disable the gate (everyone is "inside")
+export const GEOFENCE_OVERRIDE = { lat: 0, lng: 0, radius: 20_000_000 };
+```
+
+Get your coordinates in the browser console:
+```js
+navigator.geolocation.getCurrentPosition(p => console.log(p.coords.latitude, p.coords.longitude));
+```
+See the full [Geofence section](#-geofence--coordinates--radius-read-this-to-try--change-it) for `GEOFENCE_TEST_MODE` and production settings.
+
+---
+
 ## 🧱 Tech Stack
 
 | Area | Tech |

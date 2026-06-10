@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useAdminStore } from "@/store/useAdminStore";
 import { getLocationInfo } from "@/services/adminMockData";
 import { loginAdmin } from "@/services/adminApi";
+import { DEMO_MODE } from "@/lib/demo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -18,6 +19,11 @@ export default function AdminLoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Demo: this venue's admin username is the slug without hyphens
+  // (e.g. kopi-braga → kopibraga); the seed password is the same for all.
+  const demoUser = location.replace(/-/g, "");
+  const demoPass = "admin123";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +65,36 @@ export default function AdminLoginPage() {
         <p className="text-[13.5px] text-admin-text-muted mb-7 leading-[1.6]">
           Masuk dengan kredensial yang diberikan oleh tim NetSpace untuk mengelola <strong>{locInfo.name}</strong>.
         </p>
+
+        {/* Demo credentials */}
+        {DEMO_MODE && (
+          <div className="py-3 px-4 rounded-[10px] bg-admin-primary/[0.08] border border-admin-primary/25 mb-5">
+            <p className="text-[12.5px] font-semibold text-admin-accent mb-1.5">
+              🔓 Mode Demo — silakan masuk:
+            </p>
+            <div className="text-[13px] text-admin-text-body leading-[1.7]">
+              Username:{" "}
+              <code className="font-mono text-white bg-white/10 px-1.5 py-px rounded">
+                {demoUser}
+              </code>
+              <br />
+              Password:{" "}
+              <code className="font-mono text-white bg-white/10 px-1.5 py-px rounded">
+                {demoPass}
+              </code>
+            </div>
+            <button
+              type="button"
+              className="mt-2.5 text-[12px] font-semibold text-admin-accent bg-admin-primary/15 border border-admin-primary/30 rounded-md px-3 py-1.5 cursor-pointer transition-colors hover:bg-admin-primary/25"
+              onClick={() => {
+                setUsername(demoUser);
+                setPassword(demoPass);
+              }}
+            >
+              Isi otomatis
+            </button>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
