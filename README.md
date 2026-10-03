@@ -1,230 +1,265 @@
-# NetSpace — Frontend
+<div align="center">
 
-**NetSpace** is a location‑based, ephemeral social app for cafés. A visitor scans the café's QR code, gets gated by GPS (they must physically be at the venue), checks in with a quick profile, and can then see who else is there and chat — public room, direct messages, and group chats. All session data is purged when they leave.
+# NetSpace
 
-This repository is the **web client** (Next.js). It talks to the [NetSpace backend](#-backend-connection) over REST + WebSocket.
+**Meet the people who are in the same café as you, right now.**
 
-> **Note:** geolocation requires **HTTPS** (works on `localhost` and on any HTTPS domain — not on plain‑HTTP LAN IPs).
+A location-based social app for cafés. Visitors scan the venue's QR code, pass a GPS check, and can then see who else is there and chat with them. Nothing is kept after they leave.
+
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=white)
+![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-realtime-6E56CF)
+
+<img src="docs/screenshots/hero.png" alt="NetSpace: who's here, public room, direct message and group chat screens" width="100%">
+
+**Web client (this repo)** · [Go backend](https://github.com/Kristantowinata/netspace-backend)
+
+</div>
 
 ---
 
-## ✨ Features
+## Contents
 
-- 📍 **Location gate** — you can only enter when you're physically inside the café's geofence (GPS).
-- 👋 **Presence** — see who's currently at the venue, filter by interests, real‑time join/leave.
-- 💬 **Chat** — public room, 1‑to‑1 DMs (with WhatsApp‑style read receipts), and group chats (create, rename, invite, leave).
-- 🔔 **Notifications** — incoming‑DM toast, group invites, tap‑to‑dismiss.
-- 🚫 **Block / unblock** — session‑scoped, person‑to‑person.
-- 🕒 **Auto‑logout** — after 30 min idle, or when you leave the venue's geofence.
-- 🛠️ **Admin panel** — per café: live analytics, active users, force‑logout, and a **QR generator** (PNG/SVG) for the venue.
+- [The idea](#the-idea)
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Tech stack](#tech-stack)
+- [Run it locally](#run-it-locally)
+- [Configuration](#configuration)
+- [Project structure](#project-structure)
+- [Security and privacy](#security-and-privacy)
+- [Team](#team)
 
----
+## The idea
 
-## 🧪 Trying it out (demo)
+People sit next to each other in cafés every day without ever talking. Global social apps don't help with that because they connect you to people *anywhere*. NetSpace only connects you to people *here*:
 
-> 🧪 **This deployment runs in DEMO mode** (`lib/demo.ts`). The app normally **gates entry on GPS** — you must be physically inside the café's geofence — but in demo mode the gate **self‑anchors on *your* position**, so anyone can get in from anywhere while the GPS "you must be at the venue" UX stays visible. Walk ~150 m away and you'll still be logged out — that's the location feature in action. For a real café, set `DEMO_MODE = false`.
+1. **Scan** the QR code on the table.
+2. **Prove you're on site**: the browser's GPS has to place you inside the café's geofence.
+3. **Check in** with a display name and a few interests. No account, no password.
+4. **Chat** in the café's public room, privately one-to-one, or in small groups.
+5. **Leave**: walk out of the geofence or go idle for 30 minutes and the session ends. Your chats are deleted.
 
-### Admin panel
-Open `/<slug>/admin/login` and sign in with the demo credentials:
+Café owners get an admin panel with live analytics, the list of active visitors, moderation tools, and a printable QR code for their venue.
 
-| Café | URL | Username | Password |
-|---|---|---|---|
-| Kopiloka | `/kopiloka/admin/login` | `kopiloka` | `admin123` |
-| Koktong | `/koktong/admin/login` | `koktong` | `admin123` |
-| Kopi Braga | `/kopi-braga/admin/login` | `kopibraga` | `admin123` |
+## Screenshots
 
-> 🔓 **Demo credentials only — change them in production.** With these you can view analytics, manage active users, and download the venue QR.
+### Visitor app (mobile)
 
-### Letting yourself in from anywhere (testing the location gate)
-When running locally, open **`lib/geofence.ts`** and point the override at your own spot — or use a giant radius so you're always "inside":
+| Location gate | Check-in | Interests |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/01-location-gate.png" width="240" alt="GPS location check"> | <img src="docs/screenshots/02-check-in.png" width="240" alt="Check-in form"> | <img src="docs/screenshots/03-interests.png" width="240" alt="Interest picker"> |
+| **Who's here** | **Public room** | **Direct message** |
+| <img src="docs/screenshots/04-room.png" width="240" alt="People currently at the café"> | <img src="docs/screenshots/05-public-room.png" width="240" alt="Café-wide public chat"> | <img src="docs/screenshots/06-direct-message.png" width="240" alt="DM with read receipts and typing indicator"> |
+| **Group chat** | **Chat list** | **Notifications** |
+| <img src="docs/screenshots/07-group-chat.png" width="240" alt="Group chat with members"> | <img src="docs/screenshots/08-chat-list.png" width="240" alt="Active conversations"> | <img src="docs/screenshots/09-profile-notifications.png" width="240" alt="Profile with message and group-invite notifications"> |
 
-```ts
-// Option 1 — center on your coordinates
-export const GEOFENCE_OVERRIDE = { lat: <your-lat>, lng: <your-lng>, radius: 100 };
+### Admin panel (desktop)
 
-// Option 2 — effectively disable the gate (everyone is "inside")
-export const GEOFENCE_OVERRIDE = { lat: 0, lng: 0, radius: 20_000_000 };
+| Analytics | Active users |
+|:---:|:---:|
+| <img src="docs/screenshots/11-admin-analytics.png" alt="Admin analytics dashboard"> | <img src="docs/screenshots/12-admin-users.png" alt="Active users with force logout"> |
+| **Location & QR** | **Public chat moderation** |
+| <img src="docs/screenshots/13-admin-location-qr.png" alt="Venue details and QR code generator"> | <img src="docs/screenshots/14-admin-public-chat.png" alt="Admin view of the public room"> |
+
+<details>
+<summary>Admin login (demo mode)</summary>
+
+<img src="docs/screenshots/10-admin-login.png" alt="Admin login with demo credentials hint">
+
+</details>
+
+## Features
+
+### For visitors
+- **GPS location gate.** You can only enter while physically inside the venue's geofence, and you're signed out when you leave it.
+- **Who's here.** A live list of people at the café with their interests, filterable by interest and updated in real time as people join and leave.
+- **Public room.** One shared chat per café. Messages are kept for 24 hours.
+- **Direct messages** with typing indicators and read receipts (grey ✓✓ when sent, blue once read).
+- **Group chats.** Start one from a DM, rename it, invite people, accept or decline invites, leave.
+- **Notifications** for new DMs and group invites, plus an in-app toast.
+- **Block** someone for the rest of the session.
+- **Ephemeral by design.** Logging out wipes your messages, and the session also ends after 30 minutes idle or when you leave the geofence.
+
+### For café admins
+- **Analytics.** Check-ins today vs yesterday, users online right now, conversations today, check-ins per hour (WIB), and the most popular interests.
+- **Active users.** Search the visitor list and force-logout anyone with a reason.
+- **Location & QR.** Venue details, an on/off switch for check-ins, and a QR code you can download as PNG or SVG.
+- **Public chat moderation.** Read the room in real time, post as the venue, or clear it.
+
+## How it works
+
+```mermaid
+flowchart LR
+    subgraph Client["Next.js web app"]
+        Gate["GPS gate<br/>(Geolocation API)"]
+        UI["Room · DMs · Groups"]
+        Admin["Admin panel"]
+        Store[("Zustand<br/>sessionStorage")]
+    end
+    subgraph Server["Go backend"]
+        REST["REST API (chi)"]
+        Hub["WebSocket hub<br/>one per café"]
+    end
+    DB[("PostgreSQL")]
+
+    Gate -->|"GET /api/locations/{slug}"| REST
+    UI -->|"POST /api/sessions/check-in → JWT"| REST
+    UI <-->|"/ws?token=…<br/>presence, chat, typing, receipts"| Hub
+    Admin -->|"/api/admin/* (admin JWT)"| REST
+    Admin <-->|"moderation"| Hub
+    REST --> DB
+    Hub --> DB
+    UI --- Store
 ```
 
-Get your coordinates in the browser console:
-```js
-navigator.geolocation.getCurrentPosition(p => console.log(p.coords.latitude, p.coords.longitude));
-```
-See the full [Geofence section](#-geofence--coordinates--radius-read-this-to-try--change-it) for `GEOFENCE_TEST_MODE` and production settings.
+- **One WebSocket per tab**, shared by all pages through a singleton client (`lib/ws.ts`) that reconnects automatically. Pages subscribe to typed events with a `useWsEvent` hook. The wire types in `lib/wsTypes.ts` mirror the Go `api` package.
+- **REST handles state you load once**: check-in, venue info, chat history, notifications and all admin data. **The socket handles everything live**: presence, messages, typing, read receipts, group events, force-logout.
+- **The geofence check runs on the client.** The gate (`app/[location]/page.tsx`) and the background logout hook (`lib/useGeofenceLogout.ts`) share the same logic in `lib/geofence.ts`, which takes GPS accuracy into account so a jittery fix doesn't kick out a visitor who is actually inside.
+- **The session lives in `sessionStorage`**, not `localStorage`, so closing the tab really ends it.
 
----
+## Tech stack
 
-## 🧱 Tech Stack
-
-| Area | Tech |
+| Area | Technology |
 |---|---|
-| Framework | **Next.js 16** (App Router, Turbopack) |
-| UI | **React 19**, TypeScript (strict) |
-| Styling | **Tailwind CSS 4** + scoped `styled-jsx` |
-| State | **Zustand 5** (with `sessionStorage` persistence) |
-| Realtime | Native **WebSocket** client (singleton, auto‑reconnect) |
-| QR codes | **qrcode.react** |
-| Location | Browser **Geolocation API** |
+| Framework | Next.js 16 (App Router, Turbopack) |
+| UI | React 19, TypeScript (strict) |
+| Styling | Tailwind CSS 4 and scoped `styled-jsx` |
+| State | Zustand 5 with `sessionStorage` persistence |
+| Realtime | Native WebSocket client (singleton, auto-reconnect) |
+| Location | Browser Geolocation API with a haversine distance check |
+| QR codes | `qrcode.react` (PNG and SVG export) |
+| Backend | Go, chi, gorilla/websocket, PostgreSQL. See the [backend repo](https://github.com/Kristantowinata/netspace-backend) |
 
----
+## Run it locally
 
-## 📁 Project Structure
+You need **Node.js 20+** and the [backend](https://github.com/Kristantowinata/netspace-backend) running (by default on `http://localhost:8080`, with PostgreSQL).
 
-```
-app/[location]/            # All venue pages are scoped by café slug
-  page.tsx                 # Entry: the GPS location gate (scan-QR landing)
-  identity/ interests/     # Check-in flow
-  room/  room/public/      # "Who's here" + public chat room
-  chat/[userId]/           # 1-to-1 DM
-  group/[groupId]/         # Group chat
-  chats/  profile/         # Chat list + profile/notifications/blocked
-  admin/                   # Admin panel (analytics, users, lokasi+QR, login)
-lib/
-  ws.ts                    # WebSocket client + React hooks
-  wsTypes.ts               # Wire-format types (mirror the Go api package)
-  geofence.ts              # 📍 Geofence config + helpers (see below)
-  useGeofenceLogout.ts     # Continuous "left the venue" logout
-  useIdleLogout.ts         # 30-min idle logout
-store/                     # Zustand stores (app + admin)
-components/                # UI components (chat bubbles, modals, admin, …)
-```
-
----
-
-## 🚀 Getting Started (local)
-
-### Prerequisites
-- **Node.js 20+**
-- The **[NetSpace backend](#-backend-connection)** running (default `http://localhost:8080`) + its PostgreSQL.
-
-### 1. Install
 ```bash
+git clone https://github.com/Kristantowinata/netspace-frontend.git
+cd netspace-frontend
 npm install
 ```
 
-### 2. Configure environment
-Create **`.env.local`** in the project root:
-```bash
-# URL of the Go backend (REST + WebSocket)
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+Create `.env.local`:
 
-# Canonical app URL — used to build the QR code links in the admin panel
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-> `.env*` is git‑ignored — never commit it. In production set these in your host (e.g. Vercel) Project Settings.
-
-### 3. Run
 ```bash
-npm run dev      # dev server on http://localhost:3000
-```
-Then open one of the seeded venues, e.g. **http://localhost:3000/kopiloka**.
-
-Other scripts:
-```bash
-npm run build    # production build
-npm start        # run the production build
-npm run lint     # lint
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080   # Go backend (REST + WebSocket)
+NEXT_PUBLIC_APP_URL=http://localhost:3000        # used to build the venue QR links
 ```
 
-> **Local tip:** on `localhost` the browser allows geolocation over plain HTTP, so the gate works without HTTPS. To test from a phone you need an HTTPS URL (deploy, or use a tunnel like cloudflared/ngrok).
+Start the dev server:
 
----
+```bash
+npm run dev
+```
 
-## ⚙️ Environment Variables
+Then open a seeded venue such as **http://localhost:3000/kopiloka**. The admin panel is at **http://localhost:3000/kopiloka/admin/login**. The seeded demo admin logins are listed in the [backend README](https://github.com/Kristantowinata/netspace-backend#database-and-seed).
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Dev server on port 3000 |
+| `npm run build` / `npm start` | Production build and serve |
+| `npm run lint` | ESLint |
+
+> **Geolocation needs a secure context.** It works on `localhost` and on any HTTPS domain, but not on a plain-HTTP LAN IP. To try it on a phone, deploy it or use an HTTPS tunnel.
+
+## Configuration
+
+### Environment variables
 
 | Variable | Required | Description |
-|---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | ✅ | Base URL of the backend, e.g. `https://api.example.com`. The WS client derives `wss://` from `https://` automatically. |
-| `NEXT_PUBLIC_APP_URL` | ✅ | Canonical URL of this app, used to generate the venue QR links (`<APP_URL>/<slug>`). Falls back to the current origin if unset. |
+|---|:---:|---|
+| `NEXT_PUBLIC_API_BASE_URL` | ✅ | Backend base URL. The WebSocket URL is derived from it (`https` becomes `wss`). |
+| `NEXT_PUBLIC_APP_URL` | ✅ | Public URL of this app, encoded in the venue QR codes (`<APP_URL>/<slug>`). Falls back to the current origin. |
 
-`NEXT_PUBLIC_*` variables are inlined at **build time** — after changing them you must **rebuild / redeploy**.
+`NEXT_PUBLIC_*` values are inlined at build time, so rebuild after changing them. `.env*` files are git-ignored.
 
----
+### Demo mode (`lib/demo.ts`)
 
-## 📍 Geofence — Coordinates & Radius (read this to try / change it)
+With `DEMO_MODE = true` anyone can try the app from anywhere:
 
-The whole app is gated on location: a visitor must be within **`radius` meters** of a café's coordinate to enter, and is logged out if they walk out. The logic lives in **`lib/geofence.ts`** and is shared by the entry gate and the continuous logout hook.
+- the location gate anchors itself to the **visitor's own position**, so you get in wherever you are. Walk about 150 m away and you are still logged out, so the geofence feature stays visible;
+- the admin login shows the demo credentials;
+- the admin "location active" switch is locked so a tester can't close check-in for everyone else.
 
-### Where the coordinates come from
-Each café (a row in the backend `Locations` table) carries `latitude`, `longitude`, and `geofenceRadius`. The frontend fetches them via `GET /api/locations/{slug}`. **To change a venue's location/radius for real, update those DB columns** (see the backend README).
+Set `DEMO_MODE = false` for a real venue: strict per-café geofence, no credential hint, working switch.
 
-### `lib/geofence.ts` knobs
+<details>
+<summary><b>Geofence settings (<code>lib/geofence.ts</code>)</b></summary>
 
-```ts
-// false = production: accuracy-aware + fail-OPEN (a GPS glitch never blocks a real visitor)
-// true  = testing:    raw distance (small radius works) + fail-CLOSED (no location = blocked)
-export const GEOFENCE_TEST_MODE = false;
+Each café row in the backend `Locations` table has `latitude`, `longitude` and `geofenceRadius` (meters). The client reads them from `GET /api/locations/{slug}`.
 
-// Manual override for ALL venues (handy for testing). Set to null to use each
-// venue's real DB coordinates instead.
-export const GEOFENCE_OVERRIDE: GeofenceTarget | null = {
-  lat: -6.200754,
-  lng: 106.783913,
-  radius: 40, // meters
-};
+| Setting | Purpose |
+|---|---|
+| `GEOFENCE_TEST_MODE` | `false` is for production: accuracy-aware, and if no GPS fix arrives the visitor is let in rather than blocked. `true` is for testing: raw distance, so small radii behave predictably, and no fix means blocked. |
+| `GEOFENCE_OVERRIDE` | One `{ lat, lng, radius }` applied to **every** venue, handy for testing at your desk. Set it to `null` to use each venue's database coordinates. |
+
+To get a coordinate, right-click a spot in Google Maps (the first menu item is `lat, lng`), or run this in the browser console:
+
+```js
+navigator.geolocation.getCurrentPosition(p => console.log(p.coords.latitude, p.coords.longitude));
 ```
 
-- **Want to test the gate at your own desk?** Set `GEOFENCE_OVERRIDE` to your current spot and a small radius, then reload the app.
-- **Going to production?** Set `GEOFENCE_TEST_MODE = false` **and** `GEOFENCE_OVERRIDE = null`, then set real per‑café coordinates in the database.
+For a real café use a radius of **30–50 m**. Phone GPS is typically accurate to 10–30 m, so a smaller radius will wrongly block people who are inside.
 
-### How to get a coordinate
-- **Google Maps:** right‑click the spot → the first item is `lat, lng`.
-- **Your current position (browser console):**
-  ```js
-  navigator.geolocation.getCurrentPosition(p => console.log(p.coords.latitude, p.coords.longitude));
-  ```
+</details>
 
-### Choosing a radius
-- **Real café:** `30–50 m`. Phone GPS is typically accurate to 10–30 m, so a too‑small radius can wrongly block people who are actually inside.
-- **Testing on foot:** `10 m` (only meaningful with `GEOFENCE_TEST_MODE = true`).
+<details>
+<summary><b>Deploying to Vercel</b></summary>
 
-### Auto‑logout timing
-- Idle logout: **30 min** of no interaction (`lib/useIdleLogout.ts`).
-- Geofence logout: continuous, kicks in when you leave the radius (`lib/useGeofenceLogout.ts`).
+1. Import the repo into Vercel (Next.js is auto-detected).
+2. Set `NEXT_PUBLIC_API_BASE_URL` to the deployed backend and `NEXT_PUBLIC_APP_URL` to the Vercel URL.
+3. Deploy. HTTPS is automatic, which phones need for geolocation.
+4. Each café prints **one** static QR code from *Admin → Lokasi & QR*. It doesn't need to be secret: access is controlled by the GPS geofence, not by the QR code.
 
----
+</details>
 
-## 🔌 Backend connection
-
-This client expects the **Go backend** (separate repo). It uses:
-- **REST** for check‑in, venue lookup, chat history, notifications, admin.
-- **WebSocket** (`/ws?token=…&locationSlug=…`) for presence and live chat.
-
-Point it at your backend with `NEXT_PUBLIC_API_BASE_URL`.
-
----
-
-## 🗺️ QR Codes
-
-Each café needs **one** static QR encoding `<NEXT_PUBLIC_APP_URL>/<slug>` (e.g. `https://app.example.com/kopiloka`). Generate & download it (PNG/SVG) from the admin panel:
+## Project structure
 
 ```
-/<slug>/admin/lokasi   →  log in (admin)  →  Download PNG / SVG
+app/[location]/            Every page is scoped by café slug
+  page.tsx                 GPS location gate (QR landing page)
+  identity/  interests/    Two-step check-in
+  room/  room/public/      Who's here + public room
+  chat/[userId]/           Direct message
+  group/[groupId]/         Group chat
+  chats/  profile/         Chat list, profile, notifications, blocked users
+  admin/                   Login, analytics, users, location & QR, public chat
+components/                UI building blocks (chat bubbles, modals, admin widgets…)
+lib/
+  ws.ts  wsTypes.ts        WebSocket client, hooks and wire types
+  geofence.ts              Geofence config and distance helpers
+  useGeofenceLogout.ts     Logs out when you leave the venue
+  useIdleLogout.ts         Logs out after 30 minutes idle
+  demo.ts                  Public demo switch
+services/adminApi.ts       Admin REST client
+store/                     Zustand stores (visitor + admin)
 ```
 
-The QR is static and points straight at your domain — print it once and reuse it. Security comes from the **GPS geofence**, not from the QR being secret.
+## Security and privacy
 
----
+- **No accounts, no passwords for visitors.** A check-in returns a short-lived JWT (8 h) kept in `sessionStorage`. Logging out revokes it on the server and deletes that visitor's chat data.
+- **Presence is tied to place and time.** The GPS gate, logout on leaving the geofence, logout after 30 minutes idle, and a 24-hour retention window for the public room.
+- **Admins are scoped to their own café**, and their passwords are stored as bcrypt hashes on the backend.
+- **No secrets in the client or the repo.** The only build-time values are public URLs, and `.env*` is git-ignored.
+- **Before running it for real**, turn off demo mode, set real venue coordinates, replace the seeded admin passwords, and add a short privacy notice. The app uses precise location, a display name and an age.
 
-## 🏗️ Deploy (Vercel)
+## Team
 
-1. Import this repo into Vercel (framework auto‑detected as Next.js).
-2. Set env vars: `NEXT_PUBLIC_API_BASE_URL` (your backend URL), `NEXT_PUBLIC_APP_URL` (your Vercel URL).
-3. Deploy → HTTPS is provided automatically (required for geolocation on phones).
-4. After the first deploy, make sure `NEXT_PUBLIC_APP_URL` matches the live URL, then redeploy so the QR links are correct.
+Built as a Software Engineering team project at BINUS University (semester 4).
 
----
+| Member | Focus |
+|---|---|
+| **Kristanto Winata** ([@Kristantowinata](https://github.com/Kristantowinata)) | Entire web client (visitor app, admin panel, realtime client, geofencing, demo mode); backend work on group chat, read receipts, geofence data, public-room history, admin chat moderation and deployment |
+| [@latoiste](https://github.com/latoiste) | Backend core: WebSocket hub, chat, REST API, JWT auth |
+| Kevin Nathanael Limarga | Admin API, analytics queries and database schema |
 
-## ✅ Before going fully public
-- Set the geofence to production mode (above) and real per‑café coordinates.
-- Make sure the backend's admin passwords and `JWT_SECRET_KEY` are **not** the dev defaults.
-- Add a short privacy notice (the app uses precise location + a name/age).
+## License
 
----
-
-## 📄 License
-
-For educational / portfolio use.
-
----
-note : admin pass = admin123
+Shared for portfolio and educational purposes. All rights reserved by the authors.
