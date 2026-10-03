@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "js-cookie": "^3.0.5",
-    "next": "16.2.4",
+    "next": "16.3.8",
     "nodemon": "^3.1.14",
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",
